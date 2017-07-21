@@ -1,4 +1,5 @@
 #pragma once
+<<<<<<< HEAD
 #include "Abstract Neural Net.h"
 #include "Neuron - Array Neural Net.h"
 #include "Data-Structures\Array.h"
@@ -28,3 +29,6 @@ public:
 
 
 };
+=======
+#include "Data-Structures\Array.h"
+>>>>>>> 85c06ffcd520efe296db98b13ada9299da324419
