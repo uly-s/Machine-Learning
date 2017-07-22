@@ -27,8 +27,6 @@ protected:
 	// initialize neurons
 	void zeroInitialize(double* nodes, int num)
 	{
-		nodes = new double[num];
-
 		for (int i = 0; i < num; i++)
 		{
 			nodes[i] = 0;
@@ -73,22 +71,29 @@ public:
 		numOutput = outputNum;
 
 		// initialize input neurons
-		zeroInitialize(inputNodes, numInput);
-
-		// set bias neuron
-
 		// initialize hidden neurons
-		zeroInitialize(hiddenNodes, numHidden);
-
-		// set bias neuron
-
 		// initialize output neurons
+
+		inputNodes = new double[numInput + 1];
+		hiddenNodes = new double[numHidden + 1];
+		outputNodes = new double[numOutput];
+
+		zeroInitialize(inputNodes, numInput);
+		zeroInitialize(hiddenNodes, numHidden);
 		zeroInitialize(outputNodes, numOutput);
 
+		// set bias neurons
+		inputNodes[numInput] = -1;
+		hiddenNodes[numHidden] = -1;
+		
+		
 		// initialize input weights
-		zeroInitialize(inputWeights, numInput, numHidden);
-
 		// initialize output weights
+
+		inputWeights = new double*[numInput];
+		outputWeights = new double*[numHidden];
+
+		zeroInitialize(inputWeights, numInput, numHidden);
 		zeroInitialize(outputWeights, numHidden, numOutput);
 
 	}
