@@ -3,7 +3,7 @@
 
 using namespace std;
 
-class Weight
+class Edge
 {
 
 protected:
@@ -19,16 +19,16 @@ protected:
 
 public:
 
-	Weight& operator= (const double& weight)
+	Edge& operator= (const double& weight)
 	{
 		this->weight = weight;
 
 		return *this;
 	}
 
-	Weight& operator= (Weight& weight)
+	Edge& operator= (Edge& edge)
 	{
-		this->weight = weight.weight;
+		this->weight = edge.weight;
 
 		return *this;
 	}
@@ -38,27 +38,27 @@ public:
 		return this->weight == weight;
 	}
 
-	bool operator== (Weight& weight)
+	bool operator== (Edge& edge)
 	{
-		return this->weight = weight.weight;
+		return this->weight = edge.weight;
 	}
 
-	friend ostream& operator<< (ostream& os, Weight& weight)
+	friend ostream& operator<< (ostream& os, Edge& edge)
 	{
-		return weight.print(os);
+		return edge.print(os);
 	}
 
-	Weight()
+	Edge()
 	{
 		weight = 0;
 	}
 
-	Weight(double weight)
+	Edge(double weight)
 	{
 		this->weight = weight;
 	}
 
-	~Weight()
+	~Edge()
 	{
 
 	}
