@@ -23,7 +23,7 @@ public:
 		return neuron.print(os);
 	};
 
-	Neuron& operator= (Neuron& neuron)
+	Neuron& operator= (const Neuron& neuron)
 	{
 		weight = neuron.weight;
 
