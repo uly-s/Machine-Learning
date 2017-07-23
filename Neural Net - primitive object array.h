@@ -27,7 +27,7 @@ protected:
 	Edge** outputWeights;
 
 	// initialize neurons
-	void zeroInitialize(Neuron* nodes, int num)
+	void zero(Neuron* nodes, int num)
 	{
 		//nodes = new Neuron[num];
 
@@ -38,7 +38,7 @@ protected:
 	}
 
 	// zero weights
-	void zeroInitialize(Edge** weights, int height, int width)
+	void zero(Edge** weights, int height, int width)
 	{
 		//weights = new Edge*[height];
 
@@ -84,9 +84,9 @@ public:
 		hidden = new Neuron[numHidden + 1];
 		output = new Neuron[numOutput];
 		
-		zeroInitialize(input, numInput + 1);
-		zeroInitialize(hidden, numHidden + 1);	
-		zeroInitialize(output, numOutput);
+		zero(input, numInput + 1);
+		zero(hidden, numHidden + 1);	
+		zero(output, numOutput);
 		
 		// set bias neurons
 		input[numInput] = -1;
@@ -97,8 +97,8 @@ public:
 		inputWeights = new Edge*[numInput];
 		outputWeights = new Edge*[numHidden];
 
-		zeroInitialize(inputWeights, numInput, numHidden);
-		zeroInitialize(outputWeights, numHidden, numOutput);
+		zero(inputWeights, numInput, numHidden);
+		zero(outputWeights, numHidden, numOutput);
 
 	}
 

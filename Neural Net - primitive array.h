@@ -1,31 +1,48 @@
 #pragma once
 #include "Abstract Neural Net.h"
 
+
+
+
 class NeuralNet : public AbstractNeuralNet
 {
 
 protected:
 
 	// number of input, hidden, and output neurons
-	int numInput, numHidden, numOutput;
+	int NumInput, NumHidden, NumOutput;
 
 	// input neurons
-	double* inputNodes;
+	double* InputNodes;
 
 	// hidden neurons
-	double* hiddenNodes;
+	double* HiddenNodes;
 
 	// output neurons
-	double* outputNodes;
+	double* OutputNodes;
 
 	// input to hidden weights
-	double** inputWeights;
+	double** InputWeights;
 
 	// hidden to output weights;
-	double** outputWeights;
+	double** OutputWeights;
+
+	// get weighted sum  of node
+
+	// sigmoid function
+	
+	// activation function
+
+	// error gradient
+
+	// mean squared error
+
+	// initialize weights 
+
+
 
 	// initialize neurons
-	void zeroInitialize(double* nodes, int num)
+	void zero(double* nodes, int num)
 	{
 		for (int i = 0; i < num; i++)
 		{
@@ -34,7 +51,7 @@ protected:
 	}
 
 	// zero weights
-	void zeroInitialize(double** weights, int height, int width)
+	void zero(double** weights, int height, int width)
 	{
 		for (int i = 0; i < height; i++)
 		{
@@ -50,53 +67,78 @@ protected:
 
 public:
 
+
+
+	// save weights
+
+	// load weights
+
+
 	// default constructor
 	NeuralNet()
 	{
-		numInput, numHidden, numOutput = 0;
+		NumInput, NumHidden, NumOutput = 0;
 
-		inputNodes = NULL;
-		hiddenNodes = NULL;
-		outputNodes = NULL;
+		InputNodes = NULL;
+		HiddenNodes = NULL;
+		OutputNodes = NULL;
 
-		inputWeights = NULL;
-		outputWeights = NULL;
+		InputWeights = NULL;
+		OutputWeights = NULL;
+
 	}
 
 	// initializer
 	NeuralNet(int inputNum, int hiddenNum, int outputNum)
 	{
-		numInput = inputNum;
-		numHidden = hiddenNum;
-		numOutput = outputNum;
+		NumInput = inputNum;
+		NumHidden = hiddenNum;
+		NumOutput = outputNum;
 
 		// initialize input neurons
 		// initialize hidden neurons
 		// initialize output neurons
 
-		inputNodes = new double[numInput + 1];
-		hiddenNodes = new double[numHidden + 1];
-		outputNodes = new double[numOutput];
+		InputNodes = new double[NumInput + 1];
+		HiddenNodes = new double[NumHidden + 1];
+		OutputNodes = new double[NumOutput];
 
-		zeroInitialize(inputNodes, numInput);
-		zeroInitialize(hiddenNodes, numHidden);
-		zeroInitialize(outputNodes, numOutput);
+		zero(InputNodes, NumInput);
+		zero(HiddenNodes, NumHidden);
+		zero(OutputNodes, NumOutput);
 
 		// set bias neurons
-		inputNodes[numInput] = -1;
-		hiddenNodes[numHidden] = -1;
-		
+		InputNodes[NumInput] = -1;
+		HiddenNodes[NumHidden] = -1;
 		
 		// initialize input weights
 		// initialize output weights
 
-		inputWeights = new double*[numInput];
-		outputWeights = new double*[numHidden];
+		InputWeights = new double*[NumInput + 1];
+		OutputWeights = new double*[NumHidden + 1];
 
-		zeroInitialize(inputWeights, numInput, numHidden);
-		zeroInitialize(outputWeights, numHidden, numOutput);
+		zero(InputWeights, NumInput, NumHidden);
+		zero(OutputWeights, NumHidden, NumOutput);
+
+	}
+
+	// destructor
+	~NeuralNet()
+	{
+		delete[] InputNodes;
+		delete[] HiddenNodes;
+		delete[] OutputNodes;
+		
+		delete[] InputWeights;
+		delete[] OutputWeights;
 
 	}
 
 
+protected:
+
+
+
 };
+
+

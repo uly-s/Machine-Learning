@@ -43,6 +43,28 @@ public:
 		return this->weight = edge.weight;
 	}
 
+	double operator+ (Edge& edge)
+	{
+		return weight + edge.weight;
+	}
+
+	double operator+ (const double& weight)
+	{
+		return this->weight + weight;
+	}
+
+	double operator+= (Edge& edge)
+	{
+		this->weight = this->weight + edge.weight;
+		return this->weight;
+	}
+
+	double operator+= (const double& weight)
+	{
+		this->weight = this->weight + weight;
+		return this->weight;
+	}
+
 	friend ostream& operator<< (ostream& os, Edge& edge)
 	{
 		return edge.print(os);

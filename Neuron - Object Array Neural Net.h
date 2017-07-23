@@ -47,6 +47,28 @@ public:
 		return this->weight == weight;
 	}
 
+	double operator+ (Neuron& neuron)
+	{
+		return weight + neuron.weight;
+	}
+
+	double operator+ (const double& weight)
+	{
+		return this->weight + weight;
+	}
+
+	double operator+= (Neuron& neuron)
+	{
+		this->weight = this->weight + neuron.weight;
+		return this->weight;
+	}
+
+	double operator+= (const double& weight)
+	{
+		this->weight = this->weight + weight;
+		return this->weight;
+	}
+
 	Neuron()
 	{
 		weight = 0;
