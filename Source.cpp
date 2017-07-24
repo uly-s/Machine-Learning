@@ -5,6 +5,7 @@
 
 using namespace std;
 
+
 int main()
 {
 	
@@ -19,7 +20,7 @@ int main()
 
 	double** data = new double*[20000];
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 20000; i++)
 	{
 		data[i] = new double[19];
 
@@ -31,14 +32,18 @@ int main()
 
 			if (j < 18)	cin >> dummy;
 			
-			cout << data[i][j] << " ";
+			//cout << data[i][j] << " ";
 		}
 
-		cout << endl;
+		//cout << endl;
 	}
 
+	for (int i = 0; i < 20000; i++)
+	{
+		ANN->Test(data[i]);
+	}
 	
-	
+	cout << *ANN << endl;
 
 	return 0;
 }
