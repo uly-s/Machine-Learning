@@ -41,17 +41,11 @@ protected:
 		return 1 / (1 + exp(-x));
 	}
 
-	// get weighted sum of node
-	double WeightedSum()
-	{
-
-	}
-
 	// feed pattern into input
 	void FeedInput(double* data)
 	{
 		// set input nodes to data
-		for (int i = 0; i < NumInput; i++)
+		for (int i = 0; i <= NumInput; i++)
 		{
 			InputNodes[i] = data[i];
 		}
@@ -61,13 +55,13 @@ protected:
 	void FeedHidden()
 	{
 		// set each hidden node to be the weighted sum of the input nodes
-		for (int i = 0; i < NumHidden; i++)
+		for (int i = 0; i <= NumHidden; i++)
 		{
 			// clear value
 			HiddenNodes[i] = 0;
 
 			// add input node j multiplied by weight j i for the weighted sum
-			for (int j = 0; j < NumInput; i++) HiddenNodes[i] += InputNodes[j] * InputWeights[j][i];
+			for (int j = 0; j <= NumInput; j++) HiddenNodes[i] += InputNodes[j] * InputWeights[j][i];
 
 			// set the result to the activation function
 			HiddenNodes[i] = ActivationFunction(HiddenNodes[i]);
@@ -94,7 +88,6 @@ protected:
 	// Feed pattern foward
 	void FeedFoward(double* data)
 	{
-		
 		// feed into input
 		FeedInput(data);
 
@@ -125,9 +118,6 @@ protected:
 
 	}
 	
-
-	
-
 	// error gradient
 
 	// mean squared error
@@ -136,7 +126,7 @@ public:
 
 	void Test(double* data)
 	{
-
+		FeedFoward(data);
 	}
 
 	// save weights
@@ -151,16 +141,16 @@ public:
 		double rangeOutput = 1 / sqrt((double) NumHidden);
 
 		// initialize input weights
-		for (int i = 0; i < NumInput; i++)
+		for (int i = 0; i <= NumInput; i++)
 		{
-			for (int j = 0; j < NumHidden; j++)
+			for (int j = 0; j <= NumHidden; j++)
 			{
 				InputWeights[i][j] = random(rangeHidden);
 			}
 		}
 
 		// initialize output weights
-		for (int i = 0; i < NumHidden; i++)
+		for (int i = 0; i <= NumHidden; i++)
 		{
 			for (int j = 0; j < NumOutput; j++)
 			{
@@ -217,8 +207,8 @@ public:
 		InputWeights = new double*[NumInput + 1];
 		OutputWeights = new double*[NumHidden + 1];
 
-		zero(InputWeights, NumInput, NumHidden);
-		zero(OutputWeights, NumHidden, NumOutput);
+		zero(InputWeights, NumInput + 1, NumHidden + 1);
+		zero(OutputWeights, NumHidden + 1, NumOutput);
 
 		// initialize weights to random values
 		InitializeWeights();
@@ -282,7 +272,7 @@ protected:
 		// print input nodes
 		os << "Input Nodes: ";
 
-		for (int i = 0; i < NumInput; i++)
+		for (int i = 0; i <= NumInput; i++)
 		{
 			os << InputNodes[i] << " ";
 		}
@@ -292,13 +282,13 @@ protected:
 		// print input weights
 		os << "Input to hidden weights:\n\n";
 
-		for (int i = 0; i < NumInput; i++)
+		for (int i = 0; i <= NumInput; i++)
 		{
 			if (i < 10) os << " ";
 
 			os << i << ". ";
 
-			for (int j = 0; j < NumHidden; j++)
+			for (int j = 0; j <= NumHidden; j++)
 			{
 				os << InputWeights[i][j] << " ";
 			}
@@ -309,7 +299,7 @@ protected:
 		// print hidden nodes
 		os << endl << "Hidden Nodes: ";
 
-		for (int i = 0; i < NumHidden; i++)
+		for (int i = 0; i <= NumHidden; i++)
 		{
 			os << HiddenNodes[i] << " ";
 		}
@@ -319,7 +309,7 @@ protected:
 		// print output weights
 		os << "Hidden to output weights: \n\n";
 
-		for (int i = 0; i < NumHidden; i++)
+		for (int i = 0; i <= NumHidden; i++)
 		{
 			if (i < 10) os << " ";
 
@@ -327,7 +317,7 @@ protected:
 
 			for (int j = 0; j < NumOutput; j++)
 			{
-				os << OutputWeights[i][j];
+				os << OutputWeights[i][j] << " ";
 			}
 
 			os << endl;
