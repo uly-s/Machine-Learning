@@ -21,6 +21,10 @@ protected: // DATA
 	int epoch;
 	int maxEpochs;
 
+	// correct and incorrect iterations
+	int correctPatterns;
+	int incorrectPatterns;
+
 	// size of patterns and target
 	int patternSize;
 	int targetSize;
@@ -120,6 +124,8 @@ protected: // DATA
 		{
 			Epoch(patterns[i], targets[i]);
 		}
+
+		if (useBatch) updateWeights();
 	}
 
 	// run a single training example
@@ -130,6 +136,22 @@ protected: // DATA
 
 		// backpropagate network
 		backpropagate(target);
+
+		// increment epoch
+		epoch++;
+
+		// declare flag
+		bool correct = true;
+
+		// compare (clamped) output nodes to target pattern
+		for (int i = 0; i < network->NumOutput && i < targetSize; i++)
+		{
+			if (network->clampOutput(network->OutputNodes[i]) != target[i]) correct = false;
+		}
+
+		// if correct increment correct, else increment incorrect
+		if (correct) correctPatterns++;
+		else incorrectPatterns++;
 	}
 
 public: // PUBLIC METHODS
@@ -170,91 +192,19 @@ public: // PUBLIC METHODS
 	// TRAIN NETWORK, takes number of epochs and data for processing
 	void trainNetwork(int epochs, double** patterns, double** targets)
 	{
-		cout << "Output Error Gradient: \n\n";
-
-		for (int i = 0; i < network->NumOutput; i++)
-		{
-			cout << outputGradient[i] << " ";
-		}
-
-		cout << endl << endl << "Hiden Error Gradient: \n\n";
-
-		for (int i = 0; i <= network->NumHidden; i++)
-		{
-			cout << hiddenGradient[i] << " ";
-		}
-
-		cout << endl << endl;
-
-		cout << "Delta Input:\n\n";
-
-		for (int i = 0; i <= network->NumInput; i++)
-		{
-			for (int j = 0; j <= network->NumHidden; j++)
-			{
-				cout << deltaInput[i][j] << " ";
-			}
-
-			cout << endl;
-		}
-
-		cout << endl << "Delta Output: \n\n";
-
-		for (int i = 0; i <= network->NumHidden; i++)
-		{
-			for (int j = 0; j < network->NumOutput; j++)
-			{
-				cout << deltaOutput[i][j] << " ";
-			}
-
-			cout << endl;
-		}
-
-		cout << endl;
-
+		// run epoch
 		runEpoch(epochs, patterns, targets);
 
-		cout << "Output Error Gradient: \n\n";
+		// calculate set error
+		trainingSetAccuracy = 100 - ((double) incorrectPatterns / (double) epochs * 100);
 
-		for (int i = 0; i < network->NumOutput; i++)
-		{
-			cout << outputGradient[i] << " ";
-		}
+		cout << "Epochs: " << this->epoch << ", Incorrect patterns: " << incorrectPatterns << endl;
 
-		cout << endl << endl << "Hiden Error Gradient: \n\n";
+		// output accuracy
+		cout << "Training set accuracy: " << trainingSetAccuracy << "%\n\n";
 
-		for (int i = 0; i <= network->NumHidden; i++)
-		{
-			cout << hiddenGradient[i] << " ";
-		}
-
-		cout << endl << endl;
-
-		cout << "Delta Input:\n\n";
-
-		for (int i = 0; i <= network->NumInput; i++)
-		{
-			for (int j = 0; j <= network->NumHidden; j++)
-			{
-				cout << deltaInput[i][j] << " ";
-			}
-
-			cout << endl;
-		}
-
-		cout << endl << "Delta Output: \n\n";
-
-		for (int i = 0; i <= network->NumHidden; i++)
-		{
-			for (int j = 0; j < network->NumOutput; j++)
-			{
-				cout << deltaOutput[i][j] << " ";
-			}
-
-			cout << endl;
-		}
-
-		cout << endl;
+		incorrectPatterns = 0;
+		correctPatterns = 0;
 	}
 
 	// OPERATORS
@@ -271,6 +221,9 @@ public: // PUBLIC METHODS
 
 		epoch = 0;
 		maxEpochs = 0;
+
+		correctPatterns = 0;
+		incorrectPatterns = 0;
 
 		patternSize = 0;
 		targetSize = 0;
@@ -303,6 +256,9 @@ public: // PUBLIC METHODS
 		
 		epoch = 0;
 		maxEpochs = 1500;
+
+		correctPatterns = 0;
+		incorrectPatterns = 0;
 
 		patternSize = 0;
 		targetSize = 0;

@@ -124,11 +124,6 @@ protected:
 
 public:
 
-	void Test(double* data)
-	{
-		FeedFoward(data);
-	}
-
 	// save weights
 
 	// load weights
@@ -157,6 +152,38 @@ public:
 				OutputWeights[i][j] = random(rangeOutput);
 			}
 		}
+	}
+
+	// get set accuracy
+	double getSetAccuracy(int size, double** set, double** targets)
+	{
+		// is correct flag
+		bool correct = true;
+
+		// correct counter
+		int numIncorrect = 0;
+
+		// local accuracy
+		double accuracy = 0;
+
+
+
+		// feed data foward, test if pattern is correct
+		for (int i = 0; i < size; i++)
+		{
+			FeedFoward(set[i]);
+
+			for (int j = 0; j < NumOutput; j++)
+			{
+				if (clampOutput(OutputNodes[i]) != targets[i][j]) correct = false;
+			}
+
+			if (!correct) numIncorrect++;
+		}
+
+		accuracy = 100 - (numIncorrect / size * 100);
+
+		return accuracy;
 	}
 
 	friend ostream& operator<< (ostream& os, NeuralNet& net)
