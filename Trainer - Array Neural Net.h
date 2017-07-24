@@ -6,7 +6,7 @@
 class Trainer
 {
 
-protected:
+protected: // DATA
 
 	// pointer to the neural net for training
 	NeuralNet* network;
@@ -20,6 +20,10 @@ protected:
 	// epochs
 	int epoch;
 	int maxEpochs;
+
+	// size of patterns and target
+	int patternSize;
+	int targetSize;
 
 	// accuracy
 	double desiredAccuracy;
@@ -110,8 +114,25 @@ protected:
 	}
 
 	// run a training epoch 
+	void runEpoch(int epochs, double** patterns, double** targets)
+	{
+		for (int i = 0; i < epochs; i++)
+		{
+			Epoch(patterns[i], targets[i]);
+		}
+	}
 
-public:
+	// run a single training example
+	void Epoch(double* pattern, double* target)
+	{
+		// feed pattern foward
+		network->FeedFoward(pattern);
+
+		// backpropagate network
+		backpropagate(target);
+	}
+
+public: // PUBLIC METHODS
 
 	// set learning rate, momentum, and batch learning
 	void setTrainingParameters(double learningRate, double momentum, bool batch)
@@ -134,11 +155,27 @@ public:
 		this->useBatch = batch;
 	}
 
-	// train network, takes dataset plus the number of rows to iterate through
-	void trainNetwork(int epochs, double** data)
+	// set pattern size
+	void PatternSize(int pattern)
 	{
-
+		patternSize = pattern;
 	}
+
+	// set target size
+	void TargetSize(int target)
+	{
+		targetSize = target;
+	}
+
+	// TRAIN NETWORK, takes number of epochs and data for processing
+	void trainNetwork(int epochs, double** patterns, double** targets)
+	{
+		runEpoch(epochs, patterns, targets);
+	}
+
+	// OPERATORS
+
+	// CONSTRUCTORS
 
 	// default constructor
 	Trainer()
@@ -147,8 +184,13 @@ public:
 
 		learningRate = 0;
 		momentum = 0;
+
 		epoch = 0;
 		maxEpochs = 0;
+
+		patternSize = 0;
+		targetSize = 0;
+
 		desiredAccuracy = 0;
 
 		deltaInput = NULL;
@@ -174,8 +216,13 @@ public:
 		
 		learningRate = 0.001;
 		momentum = 0.9;
+		
 		epoch = 0;
 		maxEpochs = 1500;
+
+		patternSize = 0;
+		targetSize = 0;
+		
 		desiredAccuracy = 0;
 
 		deltaInput = new double*[network->NumInput + 1];
