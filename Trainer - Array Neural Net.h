@@ -1,6 +1,8 @@
 #pragma once
 #include "Neural Net - primitive array.h"
 
+
+
 class Trainer
 {
 
@@ -19,12 +21,13 @@ public:
 		network = NULL;
 	}
 
-	// initialier
+	// initializer
 	Trainer(NeuralNet* net)
 	{
 		network = net;
 	}
 
+	// 
 	~Trainer()
 	{
 
