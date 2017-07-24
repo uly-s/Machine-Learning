@@ -14,7 +14,7 @@ int main()
 
 	ANN->InitializeWeights();
 
-	cout << *ANN << endl;
+	//cout << *ANN << endl;
 
 	char dummy;
 

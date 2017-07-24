@@ -170,6 +170,48 @@ public: // PUBLIC METHODS
 	// TRAIN NETWORK, takes number of epochs and data for processing
 	void trainNetwork(int epochs, double** patterns, double** targets)
 	{
+		cout << "Output Error Gradient: \n\n";
+
+		for (int i = 0; i < network->NumOutput; i++)
+		{
+			cout << outputGradient[i] << " ";
+		}
+
+		cout << endl << endl << "Hiden Error Gradient: \n\n";
+
+		for (int i = 0; i <= network->NumHidden; i++)
+		{
+			cout << hiddenGradient[i] << " ";
+		}
+
+		cout << endl << endl;
+
+		cout << "Delta Input:\n\n";
+
+		for (int i = 0; i <= network->NumInput; i++)
+		{
+			for (int j = 0; j <= network->NumHidden; j++)
+			{
+				cout << deltaInput[i][j] << " ";
+			}
+
+			cout << endl;
+		}
+
+		cout << endl << "Delta Output: \n\n";
+
+		for (int i = 0; i <= network->NumHidden; i++)
+		{
+			for (int j = 0; j < network->NumOutput; j++)
+			{
+				cout << deltaOutput[i][j] << " ";
+			}
+
+			cout << endl;
+		}
+
+		cout << endl;
+
 		runEpoch(epochs, patterns, targets);
 
 		cout << "Output Error Gradient: \n\n";
@@ -300,7 +342,9 @@ protected:
 	// get output error gradient
 	double getOutputErrorGradient(double desiredValue, double actualValue)
 	{
-		return desiredValue * (1 - desiredValue) * (desiredValue - actualValue);
+		//cout << "output error gradient: \n\n" << desiredValue << " " << actualValue << "\n\n";
+
+		return actualValue * (1 - actualValue) * (desiredValue - actualValue);
 	}
 
 	// git hidden error gradient
