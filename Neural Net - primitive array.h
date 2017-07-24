@@ -45,7 +45,7 @@ protected:
 	void FeedInput(double* data)
 	{
 		// set input nodes to data
-		for (int i = 0; i <= NumInput; i++)
+		for (int i = 0; i < NumInput; i++)
 		{
 			InputNodes[i] = data[i];
 		}
@@ -55,7 +55,7 @@ protected:
 	void FeedHidden()
 	{
 		// set each hidden node to be the weighted sum of the input nodes
-		for (int i = 0; i <= NumHidden; i++)
+		for (int i = 0; i < NumHidden; i++)
 		{
 			// clear value
 			HiddenNodes[i] = 0;
@@ -78,7 +78,7 @@ protected:
 			OutputNodes[i] = 0;
 
 			// multiply the input by its weight and add it
-			for (int j = 0; j < NumHidden; j++) OutputNodes[i] += HiddenNodes[j] * OutputWeights[j][i];
+			for (int j = 0; j <= NumHidden; j++) OutputNodes[i] += HiddenNodes[j] * OutputWeights[j][i];
 
 			// set to activation function
 			OutputNodes[i] = ActivationFunction(OutputNodes[i]);

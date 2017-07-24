@@ -55,7 +55,7 @@ protected: // DATA
 		// get output error gradients and set delta output
 		for (int i = 0; i < network->NumOutput; i++)
 		{
-			// output gradoemt
+			// output gradient
 			outputGradient[i] = getOutputErrorGradient(desiredValues[i], network->OutputNodes[i]);
 
 			// for each weight update, get change based on gradient
@@ -68,7 +68,7 @@ protected: // DATA
 		}
 
 		// get hidden error gradients and set delta ouput
-		for (int i = 0; i <= network->NumHidden; i++)
+		for (int i = 0; i < network->NumHidden; i++)
 		{
 			// get hidden gradient
 			hiddenGradient[i] = getHiddenErrorGradient(i);
@@ -92,7 +92,7 @@ protected: // DATA
 		// update input weights
 		for (int i = 0; i <= network->NumInput; i++)
 		{
-			for (int j = 0; j <= network->NumHidden; j++)
+			for (int j = 0; j < network->NumHidden; j++)
 			{
 				network->InputWeights[i][j] += deltaInput[i][j];
 
@@ -104,7 +104,7 @@ protected: // DATA
 		// update outputweights
 		for (int i = 0; i <= network->NumHidden; i++)
 		{
-			for (int j = 0; j <= network->NumOutput; j++)
+			for (int j = 0; j < network->NumOutput; j++)
 			{
 				network->OutputWeights[i][j] += deltaOutput[i][j];
 
@@ -171,6 +171,48 @@ public: // PUBLIC METHODS
 	void trainNetwork(int epochs, double** patterns, double** targets)
 	{
 		runEpoch(epochs, patterns, targets);
+
+		cout << "Output Error Gradient: \n\n";
+
+		for (int i = 0; i < network->NumOutput; i++)
+		{
+			cout << outputGradient[i] << " ";
+		}
+
+		cout << endl << endl << "Hiden Error Gradient: \n\n";
+
+		for (int i = 0; i <= network->NumHidden; i++)
+		{
+			cout << hiddenGradient[i] << " ";
+		}
+
+		cout << endl << endl;
+
+		cout << "Delta Input:\n\n";
+
+		for (int i = 0; i <= network->NumInput; i++)
+		{
+			for (int j = 0; j <= network->NumHidden; j++)
+			{
+				cout << deltaInput[i][j] << " ";
+			}
+
+			cout << endl;
+		}
+
+		cout << endl << "Delta Output: \n\n";
+
+		for (int i = 0; i <= network->NumHidden; i++)
+		{
+			for (int j = 0; j < network->NumOutput; j++)
+			{
+				cout << deltaOutput[i][j] << " ";
+			}
+
+			cout << endl;
+		}
+
+		cout << endl;
 	}
 
 	// OPERATORS
@@ -278,8 +320,10 @@ protected:
 	// get change in output 
 	double changeOutput(int output, int hidden)
 	{
-		if (!useBatch) return learningRate * network->HiddenNodes[hidden] * outputGradient[output] + momentum
-			* deltaOutput[output][hidden];
+		if (!useBatch)
+			return learningRate * network->HiddenNodes[hidden]
+			* outputGradient[output] + momentum
+			* deltaOutput[hidden][output];
 
 		else return learningRate * network->HiddenNodes[hidden] * outputGradient[output];
 	}
@@ -287,7 +331,9 @@ protected:
 	// get change in hidden
 	double changeHidden(int hidden, int input)
 	{
-		if (!useBatch) return learningRate * network->InputNodes[input] * hiddenGradient[hidden] + momentum
+		if (!useBatch)
+			return learningRate * network->InputNodes[input] 
+			* hiddenGradient[hidden] + momentum
 			* deltaInput[input][hidden];
 
 		else return learningRate * network->InputNodes[input] * hiddenGradient[hidden];

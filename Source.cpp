@@ -17,52 +17,59 @@ int main()
 	cout << *ANN << endl;
 
 	char dummy;
-	int k = 0;
 
-	double** patterns = new double*[10000];
-	double** targets = new double*[10000];
-
+	double** patterns = new double*[1000];
+	double** targets = new double*[1000];
 
 
-	for (int i = 0; i < 10000; i++)
+
+	for (int i = 0; i < 1000; i++)
 	{
 		patterns[i] = new double[16];
 		targets[i] = new double[3];
 
-		for (int j = 0; j < 19; j++)
+		for (int j = 0; j < 16; j++)
 		{
-			//patterns[i][j] = 0;
+			patterns[i][j] = 0;
 
-
-			if (j <  16) cin >> patterns[i][j];
-			
-			else
-			{
-				cin >> targets[i][k];
-				k++;
-			}
-			
+			cin >> patterns[i][j];
 
 			if (j < 18)	cin >> dummy;
 			
-			//cout << data[i][j] << " ";
 		}
 
-		k = 0;
+		for (int k = 0; k < 3; k++)
+		{
+			targets[i][k] = 0;
+
+			cin >> targets[i][k];
+
+			if (k < 2) cin >> dummy;
+		}
+		
+	}
+
+	for (int i = 0; i < 1000; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+		//	cout << patterns[i][j] << " ";
+		}
+
+		for (int k = 0; k < 3; k++)
+		{
+		//	cout << targets[i][k] << " ";
+		}
 
 		//cout << endl;
 	}
 
-	for (int i = 0; i < 2000; i++)
-	{
-		ANN->Test(patterns[i]);
-	}
 
 	Trainer* trainer = new Trainer(ANN);
 
-	trainer->useBatchLearning(false);
+	trainer->setTrainingParameters(0.01, 0.9, false);
 
-	trainer->setStoppingConditions(1000, 90);
+	trainer->setStoppingConditions(2000, 90);
 
 	trainer->PatternSize(16);
 	trainer->TargetSize(3);
@@ -70,6 +77,10 @@ int main()
 	trainer->trainNetwork(1000, patterns, targets);
 
 	cout << *ANN << endl;
+
+
+
+
 
 	return 0;
 }
