@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include "Data-Structures\Array.h"
+#include "Edge - Object Array Neural Net.h"
 
 using namespace std;
 
