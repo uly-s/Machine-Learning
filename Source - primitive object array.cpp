@@ -41,14 +41,14 @@ int main()
 
 				cin >> targetSets[i][j][k];
 
-				if (k < 1) cin >> dummy;
+				//if (k < 1) cin >> dummy;
 
-				cout << patternSets[i][j][k] << " ";
+				cout << targetSets[i][j][k] << " ";
 			}
-
-			cout << endl;
 		}
 	}
+
+	
 
 	return 0;
 }
