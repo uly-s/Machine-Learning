@@ -24,35 +24,119 @@ protected:
 	// output neurons
 	Neuron** output;
 
-	// initialize neurons
-	void zero(Neuron** nodes, int num, int edges)
+	// activation function
+	double ActivationFunction(double x)
 	{
-		//nodes = new Neuron[num];
+		
+		// return sigmoid value of x, 1 over 1 + e ^ -x
+		return 1 / (1 + exp(-x));
+	}
 
-		for (int i = 0; i < num; i++)
+	// overload for neuron
+	double ActivationFunction(Neuron* neuron)
+	{
+		
+		double weight = **neuron;
+		
+		return 1 / (1 + exp(-**neuron));
+	}
+
+	// feed pattern into input
+	void FeedInput(double* data)
+	{
+		// set input nodes to data
+		for (int i = 0; i < numInput; i++)
 		{
-			nodes[i] = new Neuron(edges);
+			*input[i] = data[i];
 		}
 	}
 
-	// zero weights
-	void zero(Edge** weights, int height, int width)
+	// feed input into hidden 
+	void FeedHidden()
 	{
-		//weights = new Edge*[height];
-
-		for (int i = 0; i < height; i++)
+		// set each hidden node to be the weighted sum of the input nodes
+		for (int i = 0; i < numHidden; i++)
 		{
-			weights[i] = new Edge[width];
-
-			for (int j = 0; j < width; j++)
-			{
-				weights[i][j] = Edge();
-			}
+			// clear value
+			*hidden[i] = 0;
+			
+			// add input node j multiplied by weight j i for the weighted sum
+			*hidden[i] = weightedSum(input, numInput + 1, i);
+			
+			double activated = ActivationFunction(hidden[i]);
+			
+			// set the result to the activation function
+			*hidden[i] = activated;
+			
 		}
 	}
+
+	// feed hidden to output
+	void FeedOutput()
+	{
+		// set each output node to be the weighted sum of the hidden nodes
+		for (int i = 0; i < numOutput; i++)
+		{
+			// clear value
+			*output[i] = 0;
+
+			// multiply the input by its weight and add it
+			*output[i] = weightedSum(hidden, numHidden + 1, i);
+
+			// set to activation function
+			*output[i] = ActivationFunction(**output[i]);
+		}
+	}
+
+	// Feed pattern foward
+	void FeedFoward(double* data)
+	{
+		// feed into input
+		FeedInput(data);
+	
+		// feed input to hidden
+		FeedHidden();
+
+		// feed hidden to output
+		FeedOutput();
+
+	}
+
+	// feed data foward through network
+	int* FeedPatternFoward(double* data)
+	{
+		FeedFoward(data);
+
+		// get copy of results
+		int* result = new int[numOutput];
+
+		// copy over results
+		for (int i = 0; i < numOutput; i++)
+		{
+			result[i] = clampOutput(**output[i]);
+
+		//	cout << result[i] << " ";
+		}
+
+		// return results
+		return result;
+
+	}
+
+	// error gradient
+
+	// mean squared error
+
 
 
 public:
+
+	int* test(double* data)
+	{
+		return FeedPatternFoward(data);
+	}
+
+
 
 	// initialize weights to random values
 	void InitializeWeights()
@@ -64,26 +148,18 @@ public:
 		// initialize input weights
 		for (int i = 0; i <= numInput; i++)
 		{
-			cout << "Input node: " << i << " ";
-
 			for (int j = 0; j <= numHidden; j++)
 			{
 				input[i][j] = random(rangeHidden);
-
-				cout << input[i][j] << " ";
 			}
 		}
 
 		// initialize output weights
 		for (int i = 0; i <= numHidden; i++)
 		{
-			cout << "Hidden node: " << i << " ";
-
 			for (int j = 0; j < numOutput; j++)
 			{
 				hidden[i][j] = random(rangeOutput);
-
-				cout << hidden[i][j] << " ";
 			}
 
 		}
@@ -98,11 +174,9 @@ public:
 	NeuralNet()
 	{
 		numInput, numHidden, numOutput = 0;
-
 		input = NULL;
 		hidden = NULL;
 		output = NULL;
-		
 	}
 
 	// initializer
@@ -123,8 +197,6 @@ public:
 		zero(input, numInput + 1, numHidden + 1);
 		zero(hidden, numHidden + 1, numOutput);	
 		zero(output, numOutput, 0);
-
-		hidden[0][0] = 0;
 		
 		// set bias neurons
 		*input[numInput] = -1;
@@ -132,6 +204,20 @@ public:
 
 
 
+	}
+
+	// copy constructor
+	NeuralNet(NeuralNet& net)
+	{
+
+	}
+
+	// destructor
+	~NeuralNet()
+	{
+		delete[] input;
+		delete[] hidden;
+		delete[] output;
 	}
 
 protected:
@@ -142,6 +228,37 @@ protected:
 		return (((double) (rand() % 100) + 1) / 100 * 2 * range) - range;
 	}
 
+	// initialize neurons
+	void zero(Neuron** nodes, int num, int edges)
+	{
+		//nodes = new Neuron[num];
 
+		for (int i = 0; i < num; i++)
+		{
+			nodes[i] = new Neuron(edges);
+		}
+	}
+
+	// get weighted sum of inputs or hidden layer, edge is the weight we multiply by corresponding
+	// to that connection with the node
+	double weightedSum(Neuron** neurons, int nodes,  int edge)
+	{
+		double sum = 0;
+
+		for (int i = 0; i < nodes; i++)
+		{
+			sum += *neurons[i] * (*neurons[i])[edge];
+		}
+
+		return sum;
+	}
+
+	// rounds off number
+	int clampOutput(double x)
+	{
+		if (x > 0.9) return 1;
+		else if (x < 0.1) return 0;
+		else return -1;
+	}
 
 };

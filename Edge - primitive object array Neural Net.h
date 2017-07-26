@@ -65,6 +65,11 @@ public:
 		return this->weight;
 	}
 
+	double operator* (double weight)
+	{
+		return this->weight * weight;
+	};
+
 	friend ostream& operator<< (ostream& os, Edge& edge)
 	{
 		return edge.print(os);

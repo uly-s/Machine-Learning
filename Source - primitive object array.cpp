@@ -44,6 +44,15 @@ int main()
 
 	net->InitializeWeights();
 
+	int* test = net->test(patternSets[0][0]);
+
+	for (int i = 0; i < 1; i++)
+	{
+		cout << test[i] << " ";
+	}
+
+	cout << endl;
+
 
 	return 0;
 }

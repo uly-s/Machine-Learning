@@ -85,6 +85,37 @@ public:
 		return this->weight;
 	}
 
+	// multiplication operator
+	double operator* (double weight)
+	{
+		return this->weight * weight;
+	}
+
+	// multiplication operator for edge
+	double operator* (Edge& edge)
+	{
+		return edge * weight;
+	}
+
+	// negative operator
+	double operator- ()
+	{
+		return -weight;
+	}
+
+	// dereference operator
+	double& operator* ()
+	{
+		return weight;
+	}
+
+	/*
+	// conversion operator
+	operator double()
+	{
+		return weight;
+	}*/
+
 	// bracket operator
 	Edge& operator[] (int index)
 	{
