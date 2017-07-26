@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Neuron - primitive object array Neural Net.h"
+#include "Neural Net - primitive object array.h"
 
 using namespace std;
 
@@ -40,12 +40,9 @@ int main()
 	}
 
 	
-	Neuron node = Neuron(5);
+	NeuralNet* net = new NeuralNet(18, 10, 1);
 
-	for (int i = 0; i < 5; i++)
-	{
-		cout << node[i];
-	}
+	net->InitializeWeights();
 
 
 	return 0;

@@ -1,7 +1,11 @@
 #pragma once
+#include <math.h>
 #include "Abstract Neural Net.h"
-#include "Edge - Object Array Neural Net.h"
-#include "Neuron - Object Array Neural Net.h"
+#include "Edge - primitive object array Neural Net.h"
+#include "Neuron - primitive object array Neural Net.h"
+
+// for hidden neurons the index of the output edges starts at numInput + 1 
+// to account for the bias neuron, so indexing goes to num input + 1 + num output
 
 class NeuralNet : public AbstractNeuralNet
 {
@@ -12,28 +16,22 @@ protected:
 	int numInput, numHidden, numOutput;
 
 	// input neurons
-	Neuron* input;
+	Neuron** input;
 
 	// hidden neurons
-	Neuron* hidden;
+	Neuron** hidden;
 
 	// output neurons
-	Neuron* output;
-
-	// input to hidden weights
-	Edge** inputWeights;
-
-	// hidden to output weights;
-	Edge** outputWeights;
+	Neuron** output;
 
 	// initialize neurons
-	void zero(Neuron* nodes, int num)
+	void zero(Neuron** nodes, int num, int edges)
 	{
 		//nodes = new Neuron[num];
 
 		for (int i = 0; i < num; i++)
 		{
-			nodes[i] = Neuron();
+			nodes[i] = new Neuron(edges);
 		}
 	}
 
@@ -56,6 +54,46 @@ protected:
 
 public:
 
+	// initialize weights to random values
+	void InitializeWeights()
+	{
+		// get range for input nodes and hidden nodes
+		double rangeHidden = 1 / sqrt((double) numInput);
+		double rangeOutput = 1 / sqrt((double) numHidden);
+
+		// initialize input weights
+		for (int i = 0; i <= numInput; i++)
+		{
+			cout << "Input node: " << i << " ";
+
+			for (int j = 0; j <= numHidden; j++)
+			{
+				input[i][j] = random(rangeHidden);
+
+				cout << input[i][j] << " ";
+			}
+		}
+
+		// initialize output weights
+		for (int i = 0; i <= numHidden; i++)
+		{
+			cout << "Hidden node: " << i << " ";
+
+			for (int j = 0; j < numOutput; j++)
+			{
+				hidden[i][j] = random(rangeOutput);
+
+				cout << hidden[i][j] << " ";
+			}
+
+		}
+	}
+
+	// save weights
+
+	// load weights
+
+
 	// default constructor
 	NeuralNet()
 	{
@@ -65,8 +103,6 @@ public:
 		hidden = NULL;
 		output = NULL;
 		
-		inputWeights = NULL;
-		outputWeights = NULL;
 	}
 
 	// initializer
@@ -80,27 +116,32 @@ public:
 		// initialize hidden neurons
 		// initialize output neurons
 
-		input = new Neuron[numInput + 1];
-		hidden = new Neuron[numHidden + 1];
-		output = new Neuron[numOutput];
+		input = new Neuron*[numInput + 1];
+		hidden = new Neuron*[numHidden + 1];
+		output = new Neuron*[numOutput];
 		
-		zero(input, numInput + 1);
-		zero(hidden, numHidden + 1);	
-		zero(output, numOutput);
+		zero(input, numInput + 1, numHidden + 1);
+		zero(hidden, numHidden + 1, numOutput);	
+		zero(output, numOutput, 0);
+
+		hidden[0][0] = 0;
 		
 		// set bias neurons
-		input[numInput] = -1;
-		hidden[numHidden] = -1;
+		*input[numInput] = -1;
+		*hidden[numHidden] = -1;
 
 
-		// initialize weights, input to hidden and hidden to output
-		inputWeights = new Edge*[numInput];
-		outputWeights = new Edge*[numHidden];
-
-		zero(inputWeights, numInput, numHidden);
-		zero(outputWeights, numHidden, numOutput);
 
 	}
+
+protected:
+
+	// random value for initializing weights
+	double random(double range)
+	{
+		return (((double) (rand() % 100) + 1) / 100 * 2 * range) - range;
+	}
+
 
 
 };

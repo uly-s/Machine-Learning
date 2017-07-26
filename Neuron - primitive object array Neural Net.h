@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include "Data-Structures\Array.h"
-#include "Edge - Object Array Neural Net.h"
+#include "Edge - primitive object array Neural Net.h"
 
 using namespace std;
 
@@ -110,6 +110,11 @@ public:
 	{
 		this->edges = new Edge[edges];
 		
+		for (int i = 0; i < edges; i++)
+		{
+			this->edges[i] = Edge();
+		}
+
 		weight = 0;
 	}
 
