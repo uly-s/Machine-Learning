@@ -1,7 +1,7 @@
 #include <iostream>
 #include <typeinfo>
 #include "Neural Net - primitive array.h"
-#include "Trainer - Array Neural Net.h"
+#include "Trainer - primitive array Neural Net.h"
 
 using namespace std;
 
@@ -35,7 +35,7 @@ int main()
 			patternSets[i][j] = new double[18];
 			targetSets[i][j] = new double[1];
 
-			for (int k = 0; k < 16; k++)
+			for (int k = 0; k < 18; k++)
 			{
 				patternSets[i][j][k] = 0;
 

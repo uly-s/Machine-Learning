@@ -1,18 +1,15 @@
 #include <iostream>
-
+#include "Neuron - primitive object array Neural Net.h"
 
 using namespace std;
 
 
 int main()
 {
-
-
 	char dummy;
 
 	double*** patternSets = new double**[20];
 	double*** targetSets = new double**[20];
-
 
 	for (int i = 0; i < 20; i++)
 	{
@@ -31,8 +28,6 @@ int main()
 				cin >> patternSets[i][j][k];
 
 				cin >> dummy;
-
-				cout << patternSets[i][j][k] << " ";
 			}
 
 			for (int k = 0; k < 1; k++)
@@ -40,15 +35,18 @@ int main()
 				targetSets[i][j][k] = 0;
 
 				cin >> targetSets[i][j][k];
-
-				//if (k < 1) cin >> dummy;
-
-				cout << targetSets[i][j][k] << " ";
 			}
 		}
 	}
 
 	
+	Neuron node = Neuron(5);
+
+	for (int i = 0; i < 5; i++)
+	{
+		cout << node[i];
+	}
+
 
 	return 0;
 }
