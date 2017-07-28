@@ -13,12 +13,15 @@ protected:
 
 	// FIELDS
 	
-	// number of input and output "neurons"
-	int numInput, numOutput;
+	// number of input, hidden, and output "neurons"
+	int numInput, numHidden, numOutput;
 
 	// number of hidden layers and the size of those layers
 	int hiddenLayers;
 	int* hiddenWidths;
+
+	// index for last hidden layer
+	int hiddenIndex;
 
 	// input "neurons"
 	double* inputNodes;
@@ -45,16 +48,49 @@ protected:
 	// softmax function
 
 	// sigmoid function
+	double sigmoid(double x)
+	{
+		return 1 / (1 + exp(-x));
+	}
 
-	// activation function, uses softmax or sigmoid
+	// hyperbolic tangent function
+	double hyperbolicTangent(double x)
+	{
+		return tanh(x);
+	}
+
+	// activation function, uses 1. sigmoid, 2. softmax, or 3. tanh
+	double ActivationFunction( double x)
+	{
+		return sigmoid(x);
+	}
 
 	// feed input
+	void FeedInput()
+	{
+	};
 
 	// feed input to hidden, feeds hidden to hidden
+	void FeedHidden()
+	{
+
+	};
 
 	// feed hidden to output
+	void FeedOutput()
+	{
+
+	};
 
 	// feed input foward
+	void FeedFoward()
+	{
+		FeedInput();
+
+		FeedHidden();
+
+		FeedOutput();
+	}
 
 	// backpropagate errors through network, recursive
 
@@ -70,6 +106,39 @@ public:
 	// initialize weights to random values
 	void InitializeWeights()
 	{
+		// get range  of hidden nodes and output nodes
+		double rangeHidden = 1 / sqrt((double) numHidden);
+		double rangeOutput = 1 / sqrt((double) numOutput);
+
+		// initialize input weights
+		for (int i = 0; i <= numInput; i++)
+		{
+			for (int j = 0; j <= hiddenWidths[0]; j++)
+			{
+				inputWeights[i][j] = random(rangeHidden);
+			}
+		}
+
+		// initialize hidden weights
+		for (int i = 0; i < hiddenIndex; i++)
+		{
+			for (int j = 0; j <= hiddenWidths[i]; j++)
+			{
+				for (int k = 0; k <= hiddenWidths[i + 1]; k++)
+				{
+					hiddenWeights[i][j][k] = random(rangeHidden);
+				}
+			}
+		}
+
+		// initialize output weights
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			for (int j = 0; j < numOutput; j++)
+			{
+				outputWeights[i][j] = random(rangeOutput);
+			}
+		}
 
 	}
 
@@ -92,7 +161,7 @@ public:
 	// constructor - default
 	DeepNet()
 	{
-		numInput, numOutput = 0;
+		numInput, numHidden, numOutput = 0;
 
 		inputNodes, hiddenNodes, outputNodes,
 			hiddenWidths = NULL;
@@ -117,6 +186,10 @@ public:
 
 		hiddenLayers = 2;
 
+		numHidden = numHidden1 + numHidden2;
+
+		hiddenIndex = hiddenLayers - 1;
+
 		hiddenWidths = new int[2];
 		hiddenWidths[0] = numHidden1;
 		hiddenWidths[1] = numHidden2;
@@ -129,7 +202,10 @@ public:
 		outputNodes = new double[numOutput];
 
 		// zero initialize nodes
-		zero(inputNodes, numInput);
+		zero(inputNodes, numInput + 1);
+
+		// set bias neuron
+		inputNodes[numInput] = -1;
 
 		// initialize each hidden layer and zero them out
 		for (int i = 0; i < hiddenLayers; i++)
@@ -150,7 +226,9 @@ public:
 		// initialize input to hidden weights
 		inputWeights = new double*[numInput];
 
-		// initialize hidden to hidden weights
+		// initialize hidden to hidden weights, one less than the number of hidden layers
+		// because we are using output weights for the last set of weights
+		// to simplify things
 		hiddenWeights = new double**[hiddenLayers - 1];
 
 		// initialize output weights (to the width of the last hidden layer at index
@@ -168,19 +246,31 @@ public:
 		};
 
 		// zero hidden weights
-		for (int i = 0; i < hiddenLayers; i++)
+		for (int i = 0; i < hiddenIndex; i++)
 		{
 			hiddenWeights[i] = new double*[hiddenWidths[i] + 1];
 
-			for (int j = 0; j <= hiddenWidths[i]; i++)
+			for (int j = 0; j <= hiddenWidths[i]; j++)
 			{
-				if (i < hiddenLayers - 1)hiddenWeights[i][j] = new double[hiddenWidths[i + 1] + 1];
-				else hiddenWeights[i][j] = new double[numOutput];
-				
-			}
+				hiddenWeights[i][j] = new double[hiddenWidths[i + 1] + 1];
 
+				for (int k = 0; k <= hiddenWidths[i + 1]; k++)
+				{
+					hiddenWeights[i][j][k] = 0;
+				}	
+			}
 		}		
 
+		// zero output weights, one weight from each of the last hidden nodes to each output nodes
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			outputWeights[i] = new double[numOutput];
+
+			for (int j = 0; j < numOutput; j++)
+			{
+				outputWeights[i][j] = 0;
+			}
+		}
 	}
 
 	// deeper initializer, hard coded as three hidden layers
@@ -215,7 +305,11 @@ protected:
 		}
 	};
 
-	// random value for initialization of weights
+	// random initial value for weights
+	double random(double range)
+	{
+		return (((double) (rand() % 100) + 1) / 100 * 2 * range) - range;
+	}
 
 	// get weighted sum of a layer for a node in the next layer
 
@@ -231,7 +325,7 @@ protected:
 	ostream& print(ostream& os)
 	{
 		// print input
-		printLayer(os, inputNodes, numInput);
+		printLayer(os, inputNodes, numInput + 1);
 
 		os << endl;
 
@@ -246,23 +340,32 @@ protected:
 		// print hidden nodes
 		for (int i = 0; i < hiddenLayers; i++)
 		{
-			printLayer(os, hiddenNodes[i], hiddenWidths[i]);
+			printLayer(os, hiddenNodes[i], hiddenWidths[i] + 1);
 		}
 
 		os << endl;
 
 		// print hidden weights
-		for (int i = 0; i < hiddenLayers; i++)
+		for (int i = 0; i < hiddenIndex; i++)
 		{
-			for (int j = 0; j < hiddenWidths[i]; j++)
+			for (int j = 0; j <= hiddenWidths[i]; j++)
 			{
 				printLayer(os, hiddenWeights[i][j], hiddenWidths[i + 1] + 1);
 			}
+
 		}
 
 		os << endl;
 
-		// prin output nodes
+		// print output weights
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			printLayer(os, outputWeights[i], numOutput);
+		}
+
+		os << endl;
+
+		// print output nodes
 		printLayer(os, outputNodes, numOutput);
 
 		os << endl;
