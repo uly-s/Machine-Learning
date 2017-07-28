@@ -10,19 +10,19 @@ int main()
 
 	int index = 0;
 
-	short int*** training = new short int**[10];
+	double*** training = new double**[10];
 
 	char*** labels = new char**[10];
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 1; i++)
 	{
-		training[i] = new short int*[1000];
+		training[i] = new double*[1000];
 
 		labels[i] = new char*[1000];
 
 		for (int j = 0; j < 1000; j++)
 		{
-			training[i][j] = new short int[784];
+			training[i][j] = new double[784];
 			labels[i][j] = new char[1];
 
 			labels[i][j][0] = 0;
@@ -42,15 +42,13 @@ int main()
 		}
 	}
 
-
-
-
-
 	DeepNet* deepnet = new DeepNet(784, 5, 5, 5);
 
 	deepnet->InitializeWeights();
 
-	//cout << *deepnet << endl;
+	deepnet->test((double*) training[0][0]);
+
+	cout << *deepnet << endl;
 
 
 

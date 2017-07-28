@@ -66,8 +66,14 @@ protected:
 	}
 
 	// feed input
-	void FeedInput()
+	void FeedInput(double* input)
 	{
+		// set each neuron to input
+		for (int i = 0; i < numInput; i++)
+		{
+			inputNodes[i] = input[i];
+		}
+
 	};
 
 	// feed input to hidden, feeds hidden to hidden
@@ -83,9 +89,9 @@ protected:
 	};
 
 	// feed input foward
-	void FeedFoward()
+	void FeedFoward(double* input)
 	{
-		FeedInput();
+		FeedInput(input);
 
 		FeedHidden();
 
@@ -101,7 +107,21 @@ public:
 
 	// PUBLIC METHODS
 
+	void test(double* data)
+	{
+		FeedFoward(data);
+
+		for (int i = 0; i < numOutput; i++)
+		{
+			//cout << outputNodes[i] << " ";
+		}
+
+		//cout << endl;
+
+	}
+
 	// feed pattern foward, return results
+	
 
 	// initialize weights to random values
 	void InitializeWeights()
