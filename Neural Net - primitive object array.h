@@ -114,8 +114,6 @@ protected:
 		for (int i = 0; i < numOutput; i++)
 		{
 			result[i] = clampOutput(**output[i]);
-
-		//	cout << result[i] << " ";
 		}
 
 		// return results
@@ -129,6 +127,7 @@ protected:
 
 
 
+
 public:
 
 	int* test(double* data)
@@ -136,7 +135,9 @@ public:
 		return FeedPatternFoward(data);
 	}
 
+	// get set accuracy
 
+	// get set mean squared accuracy
 
 	// initialize weights to random values
 	void InitializeWeights()
@@ -168,7 +169,6 @@ public:
 	// save weights
 
 	// load weights
-
 
 	// default constructor
 	NeuralNet()
