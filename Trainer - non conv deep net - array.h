@@ -27,6 +27,9 @@ protected:
 	// batch size
 	int batchSize;
 
+	// number of wrong answers
+	int wrong;
+
 	// input error
 	double* inputError;
 
@@ -67,6 +70,14 @@ protected:
 
 		// get weight changes
 
+		// set delta input
+		setDeltaInput();
+
+		// set delta hidden
+		setDeltaHidden();
+
+		// set delta output
+		setDeltaOutput();
 
 	}
 
@@ -120,12 +131,131 @@ protected:
 		}
 	}
 
+	// set input weight changes
+	void setDeltaInput()
+	{
+		// for each input node
+		for (int i = 0; i < net->numInput; i++)
+		{
+			// for each node in the first hidden layer
+			for (int j = 0; j < net->hiddenWidths[0]; j++)
+			{
+				// change in input equals learning rate times error at node times sigmoid prime of input times input
+				deltaInput[i][j] += LR * inputError[i] * net->sigmoidPrime(net->inputNodes[i]) * net->inputNodes[i];
+			}
+		}
+	}
+
+	// set hidden weight changes
+	void setDeltaHidden()
+	{
+		// for each hidden layer
+		for (int i = 0; i < net->hiddenIndex; i++)
+		{
+			// for each hiden node in the layer
+			for (int j = 0; j <= net->hiddenWidths[i]; j++)
+			{
+				// for each hidden weight
+				for (int k = 0; k <= net->hiddenWidths[i + 1]; i++)
+				{
+					// change in weight equals learning rate times error at node
+					// times sigmoid prime of node value times node value
+					deltaHidden[i][j][k] += LR * hiddenError[i][j] * net->sigmoidPrime(net->hiddenNodes[i][j]) * net->hiddenNodes[i][j];
+				}
+			}
+		}
+
+	};
+
+	// set output weight changes
+	void setDeltaOutput()
+	{
+		// for each of the last nodes in the hidden layer
+		for (int i = 0; i <= net->hiddenWidths[net->hiddenIndex]; i++)
+		{
+			// for each output node
+			for (int j = 0; j < net->numOutput; j++)
+			{
+				// change in output equals learning rate times error at node times
+				// sigmoid prime of node value times node value
+				deltaOutput[i][j] += LR * outputError[i] * net->sigmoidPrime(net->outputNodes[i]) * net->outputNodes[i];
+			}
+		}
+	}
+
+	// update weights
+	void UpdateWeights()
+	{
+		// update input weights
+		
+		// for each input node
+		for (int i = 0; i <= net->numInput; i++)
+		{
+			// for each node in the first hidden layer
+			for (int j = 0; j <= net->hiddenWidths[0]; j++)
+			{
+				net->inputWeights[i][j] += deltaInput[i][j];
+
+				deltaInput[i][j] = 0;
+			}
+		}
+
+		// update hidden weights
+		
+		// for each hidden layer
+		for (int i = 0; i < net->hiddenIndex; i++)
+		{
+			// for each node in layer i
+			for (int j = 0; j <= net->hiddenWidths[i]; j++)
+			{
+				// for each node in the next layer
+				for (int k = 0; k <= net->hiddenWidths[i + 1]; k++)
+				{
+					net->hiddenWeights[i][j][k] += deltaHidden[i][j][k];
+
+					deltaHidden[i][j][k] = 0;
+				}
+			}
+		}
+
+		// update output weights
+
+		// for each node int the last hidden layer
+		for (int i = 0; i < net->hiddenWidths[net->hiddenIndex]; i++)
+		{
+			// for each output nodes
+			for (int j = 0; j < net->numOutput; j++)
+			{
+				net->outputWeights[i][j] += deltaOutput[i][j];
+
+				deltaOutput[i][j] = 0;
+			}
+		}
+
+
+
+	}
+
 	// run individual training epoch
 	void Epoch(double* input, double* targets)
 	{
 		net->FeedFoward(input);
 
 		backpropagate(targets);
+
+		bool correct = true;
+
+		for (int i = 0; i < net->numOutput; i++)
+		{
+			if (net->Round(net->outputNodes[i]) != targets[i])
+			{
+				correct = false;
+
+				cout << "Output: " << net->outputNodes[i] << ", Target: " << targets[i] << endl;
+			}
+		}
+
+		if (!correct) wrong++;
 	}
 
 	// run batch
@@ -135,6 +265,8 @@ protected:
 		{
 			Epoch(inputs[i], targets[i]);
 		}
+
+		UpdateWeights();
 	}
 
 
@@ -159,7 +291,15 @@ public:
 			Batch(data[index], targets[index]);
 
 			epoch += batchSize;
+
+			trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
+
+			cout << "Accuracy: " << trainingAccuracy << ", Epoch: " << epoch << endl;
+
+			wrong = 0;
 		}
+
+
 	}
 
 	// set training parameters, batch size, learning rate, desired accuracy, max epochs
@@ -186,7 +326,7 @@ public:
 	{
 		net = NULL;
 
-		accuracy, epochs, batchSize, maxEpochs, LR = 0;
+		accuracy, epochs, batchSize, maxEpochs, LR, wrong = 0;
 
 		inputError, hiddenError, outputError = NULL;
 
@@ -200,7 +340,7 @@ public:
 
 		net = network;
 
-		accuracy, epochs, batchSize, maxEpochs, LR = 0;
+		accuracy, epochs, batchSize, maxEpochs, LR, wrong = 0;
 
 		inputError = new double[net->numInput];
 
@@ -301,17 +441,9 @@ public:
 
 protected:
 
-	// set input weight changes
 
-	// set hidden weight changes
 
-	// set output weight changes
 
-	// delta or weight prime, the formula for how we change the weights
-	double weightPrime(double weight, double error)
-	{
-		return weight;
-	}
 
 
 
