@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include <vector>
 #include "Deep Neural Network - non convolutional - array implementation.h"
+#include "Trainer - non conv deep net - array.h"
 
 
 int main()
@@ -42,13 +43,15 @@ int main()
 		}
 	}
 
-	DeepNet* deepnet = new DeepNet(784, 5, 5, 5);
+	DeepNet* deepnet = new DeepNet(2, 2, 2, 1);
+
+	Trainer* trainer = new Trainer(deepnet);
 
 	deepnet->InitializeWeights();
 
 	deepnet->test((double*) training[0][0]);
 
-	cout << *deepnet << endl;
+	//cout << *deepnet << endl;
 
 
 
