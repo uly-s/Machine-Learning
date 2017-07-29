@@ -145,7 +145,7 @@ public:
 	void test(const double& data)
 	{
 		
-		cout << Round(data) << endl;
+		//cout << Round(data) << endl;
 		
 
 	}

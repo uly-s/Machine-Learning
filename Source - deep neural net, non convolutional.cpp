@@ -13,18 +13,18 @@ int main()
 
 	double*** training = new double**[10];
 
-	char*** labels = new char**[10];
+	double*** labels = new double**[10];
 
 	for (int i = 0; i < 1; i++)
 	{
 		training[i] = new double*[1000];
 
-		labels[i] = new char*[1000];
+		labels[i] = new double*[1000];
 
 		for (int j = 0; j < 1000; j++)
 		{
 			training[i][j] = new double[784];
-			labels[i][j] = new char[1];
+			labels[i][j] = new double[1];
 
 			labels[i][j][0] = 0;
 
@@ -43,17 +43,16 @@ int main()
 		}
 	}
 
-	DeepNet* deepnet = new DeepNet(2, 2, 2, 1);
+	DeepNet* deepnet = new DeepNet(784, 600, 500, 1);
 
 	Trainer* trainer = new Trainer(deepnet);
 
 	deepnet->InitializeWeights();
 
-	//deepnet->test((double*) training[0][0]);
-
-	//cout << *deepnet << endl;
-
-	deepnet->test(150.5096);
+	trainer->Parameters(10, 0.01, 90, 100);
+	
+	trainer->Train(training, labels, 100);
+	
 
 	return 0;
 }
