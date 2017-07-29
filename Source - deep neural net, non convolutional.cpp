@@ -49,11 +49,11 @@ int main()
 
 	deepnet->InitializeWeights();
 
-	deepnet->test((double*) training[0][0]);
+	//deepnet->test((double*) training[0][0]);
 
 	//cout << *deepnet << endl;
 
-
+	deepnet->test(150.5096);
 
 	return 0;
 }

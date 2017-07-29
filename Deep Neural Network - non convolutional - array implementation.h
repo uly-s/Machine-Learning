@@ -142,16 +142,11 @@ public:
 
 	// PUBLIC METHODS
 
-	void test(double* data)
+	void test(const double& data)
 	{
-		FeedFoward(data);
-
-		for (int i = 0; i < numOutput; i++)
-		{
-		//	cout << outputNodes[i] << " ";
-		}
-
-		//cout << endl;
+		
+		cout << Round(data) << endl;
+		
 
 	}
 
@@ -408,9 +403,9 @@ protected:
 	// clamp output to a round number
 
 	// round number, for formatting output
-	double Round(double x)
+	int Round(double x)
 	{
-		return round(x * 1000000000) / 1000000000;
+		return (int) (round(x * 1) / 1);
 	}
 
 	// print for ostream operator
