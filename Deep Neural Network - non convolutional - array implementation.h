@@ -6,6 +6,8 @@ using namespace std;
 
 // fully connected simple deep neural network
 
+class Trainer;
+
 class DeepNet
 {
 
@@ -43,6 +45,9 @@ protected:
 	// hidden to output weights
 	double** outputWeights;
 
+	// FRIENDS
+	friend Trainer;
+
 	// PROTECTED METHODS
 
 	// softmax function
@@ -51,6 +56,12 @@ protected:
 	double sigmoid(double x)
 	{
 		return 1 / (1 + exp(-x));
+	}
+
+	// derivative of sigmoid
+	double sigmoidPrime(double x)
+	{
+		return sigmoid(x) * (1 - sigmoid(x));
 	}
 
 	// hyperbolic tangent function
@@ -76,16 +87,34 @@ protected:
 
 	};
 
-	// feed input to hidden, feeds hidden to hidden
+	// feed feeds hidden to hidden
 	void FeedHidden()
 	{
+		// feed input to hidden
+		for (int i = 0; i <= hiddenWidths[0]; i++)
+		{
+			hiddenNodes[0][i] = ActivationFunction(weightedInput(i));
+		}
+
+
+		// feed one hidden layer to the next
+		for (int i = 1; i < hiddenLayers; i++)
+		{
+			for (int j = 0; j <= hiddenWidths[i]; j++)
+			{
+				hiddenNodes[i][j] = ActivationFunction(weightedHidden(i - 1, j));
+			}
+		}
 
 	};
 
 	// feed hidden to output
 	void FeedOutput()
 	{
-
+		for (int i = 0; i < numOutput; i++)
+		{
+			outputNodes[i] = ActivationFunction(weightedOutput(i));
+		}
 	};
 
 	// feed input foward
@@ -98,7 +127,13 @@ protected:
 		FeedOutput();
 	}
 
-	// backpropagate errors through network, recursive
+	// backpropagate errors through network
+	void backpropagate(double* desiredValues)
+	{
+
+
+
+	}
 
 	// backpropagation algorithm
 
@@ -113,7 +148,7 @@ public:
 
 		for (int i = 0; i < numOutput; i++)
 		{
-			//cout << outputNodes[i] << " ";
+		//	cout << outputNodes[i] << " ";
 		}
 
 		//cout << endl;
@@ -249,11 +284,11 @@ public:
 		// initialize hidden to hidden weights, one less than the number of hidden layers
 		// because we are using output weights for the last set of weights
 		// to simplify things
-		hiddenWeights = new double**[hiddenLayers - 1];
+		hiddenWeights = new double**[hiddenIndex];
 
 		// initialize output weights (to the width of the last hidden layer at index
 		// 1 less than the number of layers)
-		outputWeights = new double*[hiddenWidths[hiddenLayers - 1] + 1];
+		outputWeights = new double*[hiddenWidths[hiddenIndex] + 1];
 		
 		// zero input weights
 		for (int i = 0; i <= numInput; i++)
@@ -331,7 +366,44 @@ protected:
 		return (((double) (rand() % 100) + 1) / 100 * 2 * range) - range;
 	}
 
-	// get weighted sum of a layer for a node in the next layer
+	// get weighted sum of input for a node in the next layer
+	double weightedInput(int node)
+	{
+		double sum = 0;
+
+		for (int i = 0; i <= numInput; i++)
+		{
+			sum += inputNodes[i] * inputWeights[i][node];
+		}
+
+		return sum;
+	}
+
+	// get weighted sum of a hidden layer for a node in the next layer
+	double weightedHidden(int layer, int node)
+	{
+		double sum = 0;
+
+		for (int i = 0; i <= hiddenWidths[layer]; i++)
+		{
+			sum += hiddenNodes[layer][i] * hiddenWeights[layer][i][node];
+		}
+
+		return sum;
+	}
+
+	// get weighted sum of output for a given output node
+	double weightedOutput(int node)
+	{
+		double sum = 0;
+
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			sum += hiddenNodes[hiddenIndex][i] * outputWeights[i][node];
+		}
+
+		return sum;
+	}
 
 	// clamp output to a round number
 
@@ -350,7 +422,7 @@ protected:
 		os << endl;
 
 		// print input weights
-		for (int i = 0; i < hiddenWidths[0] + 1; i++)
+		for (int i = 0; i <= numInput; i++)
 		{
 			printLayer(os, inputWeights[i], hiddenWidths[0] + 1);
 		}
