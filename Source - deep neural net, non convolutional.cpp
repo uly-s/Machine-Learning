@@ -11,13 +11,13 @@ int main()
 
 	int index = 0;
 
-	double*** training = new double**[1];
+	double*** training = new double**[10];
 
-	double*** labels = new double**[1];
+	double*** labels = new double**[10];
 
-	double*** labelArrays = new double**[1];
+	double*** labelArrays = new double**[10];
 
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		training[i] = new double*[1000];
 
@@ -67,9 +67,9 @@ int main()
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(50, 0.1, 90, 1000);
+	trainer->Parameters(50, 0.1, 90, 2000);
 	
-	trainer->Train(training, labelArrays, 1000);
+	trainer->Train(training, labelArrays, 2000);
 	
 
 	return 0;

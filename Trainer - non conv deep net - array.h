@@ -314,9 +314,13 @@ public:
 
 		int index = 0;
 
+		int batches = 0;
+
+		int bigBatches = 0;
+
 		while (epoch < epochs && epoch < maxEpochs)
 		{
-			Batches(data[index], targets[index], epochs / batchSize);
+			Batches(data[index], targets[index], 20);
 
 			trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
 
@@ -372,9 +376,6 @@ public:
 
 		wrong = 0;
 		epochs = 0;
-
-
-		cout << wrong << endl;
 
 		inputError = new double[net->numInput];
 
