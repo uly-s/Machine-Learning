@@ -67,7 +67,7 @@ int main()
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(50, 0.1, 90, 2000);
+	trainer->Parameters(50, 0.1, 90, 2000, 1000);
 	
 	trainer->Train(training, labelArrays, 2000);
 	

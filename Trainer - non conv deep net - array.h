@@ -30,6 +30,9 @@ protected:
 	// batch size
 	int batchSize;
 
+	// size of training set
+	int setSize;
+
 	// number of wrong answers
 	int wrong;
 
@@ -74,13 +77,13 @@ protected:
 		// get weight changes
 
 		// set delta input
-		setDeltaInput();
+		//setDeltaInput();
 
 		// set delta hidden
-		setDeltaHidden();
+		//setDeltaHidden();
 
 		// set delta output
-		setDeltaOutput();
+		//setDeltaOutput();
 
 	}
 
@@ -98,6 +101,10 @@ protected:
 			for (int j = 0; j < net->numOutput; j++)
 			{
 				hiddenError[net->hiddenIndex][i] += outputError[j] * net->outputWeights[i][j];
+
+				// change in output equals learning rate times error at node times
+				// sigmoid prime of node value times node value
+				deltaOutput[i][j] += LR * outputError[i] * net->sigmoidPrime(net->outputNodes[i]) * net->outputNodes[i];
 			}
 		}
 
@@ -121,6 +128,10 @@ protected:
 				for (int k = 0; k <= net->hiddenWidths[i + 1]; k++)
 				{
 					hiddenError[i][j] += hiddenError[i + 1][j] * net->hiddenWeights[i][j][k];
+
+					// change in weight equals learning rate times error at node
+					// times sigmoid prime of node value times node value
+					deltaHidden[i][j][k] += LR * hiddenError[i][j] * net->sigmoidPrime(net->hiddenNodes[i][j]) * net->hiddenNodes[i][j];
 				}
 			}
 		}
@@ -139,6 +150,9 @@ protected:
 			for (int j = 0; j <= net->hiddenWidths[0]; j++)
 			{
 				inputError[i] += hiddenError[0][j] * net->inputWeights[i][j];
+
+				// change in input equals learning rate times error at node times sigmoid prime of input times input
+				deltaInput[i][j] += LR * inputError[i] * net->sigmoidPrime(net->inputNodes[i]) * net->inputNodes[i];
 			}
 		}
 	}
@@ -262,8 +276,6 @@ protected:
 			if (net->clampOutput(net->outputNodes[i]) != targets[i])
 			{
 				correct = false;
-
-				//cout << "Output: " << net->outputNodes[i] << ", Target: " << targets[i] << endl;
 			}
 		}
 
@@ -284,23 +296,6 @@ protected:
 		UpdateWeights();
 	}
 
-	// run batches
-	void Batches(double** input, double** targets, int batches)
-	{
-		double trainingAccuracy = 0;
-
-		for (int i = 0; i < batches; i++)
-		{
-			Batch(input, targets, i * batchSize);
-
-			//cout << "Wrong: " << wrong << ", Epoch: " << epoch << ", Epochs: " << epochs << endl;
-
-			cout << 100 - ((double) wrong / (double) epochs * 100) << endl;
-		}
-	}
-
-
-
 
 public:
 
@@ -314,28 +309,32 @@ public:
 
 		int index = 0;
 
-		int batches = 0;
-
-		int bigBatches = 0;
+		int set = 0;
 
 		while (epoch < epochs && epoch < maxEpochs)
 		{
-			Batches(data[index], targets[index], 20);
+			Batch(data[set], targets[set], index);
 
-			trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
+			trainingAccuracy = 100 - ((double) wrong / (double) this->epochs * 100);
 
 			cout << "Accuracy: " << trainingAccuracy << ", Epoch: " << epoch << endl;
 
 			//wrong = 0;
 
-			index++;
+			index += batchSize;
+
+			if (index == setSize || index > setSize)
+			{
+				set++;
+				index = 0;
+			}
 		}
 
 
 	}
 
 	// set training parameters, batch size, learning rate, desired accuracy, max epochs
-	void Parameters(int batchSize, double learningRate, double targetAccuracy, int maxEpochs)
+	void Parameters(int batchSize, double learningRate, double targetAccuracy, int maxEpochs, int setSize)
 	{
 		this->batchSize = batchSize;
 		
@@ -344,6 +343,8 @@ public:
 		accuracy = targetAccuracy;
 
 		this->maxEpochs = maxEpochs;
+
+		this->setSize = setSize;
 	}
 
 
@@ -376,6 +377,7 @@ public:
 
 		wrong = 0;
 		epochs = 0;
+		setSize = 0;
 
 		inputError = new double[net->numInput];
 
