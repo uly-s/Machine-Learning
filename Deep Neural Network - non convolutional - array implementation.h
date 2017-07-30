@@ -120,7 +120,7 @@ protected:
 	{
 		for (int i = 0; i < numOutput; i++)
 		{
-			outputNodes[i] = ActivationFunction(weightedOutput(i));
+			outputNodes[i] = clampOutput(ActivationFunction(weightedOutput(i)));
 		}
 	};
 

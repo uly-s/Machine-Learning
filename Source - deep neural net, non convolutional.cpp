@@ -41,7 +41,11 @@ int main()
 			{
 				labelArrays[i][j][k] = 0;
 
-				if (k == labels[i][j][k]) labelArrays[i][j][k] = 1;
+				if (k == labels[i][j][k])
+				{
+					labelArrays[i][j][k] = 1;
+				}
+
 			}
 
 			cin >> dummy;

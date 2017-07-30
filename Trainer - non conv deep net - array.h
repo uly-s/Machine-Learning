@@ -90,6 +90,9 @@ protected:
 		// for each node in the last hidden layer
 		for (int i = 0; i <= net->hiddenWidths[net->hiddenIndex]; i++)
 		{
+			// clear hidden error
+			hiddenError[net->hiddenIndex][i] = 0;
+
 			// multiply the error at output by the weight of the hidden node leading to that output
 			// to get the weighted rror at that node
 			for (int j = 0; j < net->numOutput; j++)
@@ -111,6 +114,9 @@ protected:
 			// for each node in the layer
 			for (int j = 0; j <= net->hiddenWidths[i]; j++)
 			{
+				// clear hidden error
+				hiddenError[i][j] = 0;
+
 				// for each hidden weight
 				for (int k = 0; k <= net->hiddenWidths[i + 1]; k++)
 				{
@@ -126,6 +132,9 @@ protected:
 		// for each input node
 		for (int i = 0; i <= net->numInput; i++)
 		{
+			// clear input error
+			inputError[i] = 0;
+
 			// for each node in the top hidden layer
 			for (int j = 0; j <= net->hiddenWidths[0]; j++)
 			{
@@ -141,7 +150,7 @@ protected:
 		for (int i = 0; i < net->numInput; i++)
 		{
 			// for each node in the first hidden layer
-			for (int j = 0; j < net->hiddenWidths[0]; j++)
+			for (int j = 0; j <= net->hiddenWidths[0]; j++)
 			{
 				// change in input equals learning rate times error at node times sigmoid prime of input times input
 				deltaInput[i][j] += LR * inputError[i] * net->sigmoidPrime(net->inputNodes[i]) * net->inputNodes[i];
@@ -254,7 +263,7 @@ protected:
 			{
 				correct = false;
 
-			//	cout << "Output: " << net->outputNodes[i] << ", Target: " << targets[i] << endl;
+				//cout << "Output: " << net->outputNodes[i] << ", Target: " << targets[i] << endl;
 			}
 		}
 
@@ -284,9 +293,9 @@ protected:
 		{
 			Batch(input, targets, i * batchSize);
 
-			trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
+			//cout << "Wrong: " << wrong << ", Epoch: " << epoch << ", Epochs: " << epochs << endl;
 
-			cout << "accuracy: " << trainingAccuracy << endl;
+			cout << 100 - ((double) wrong / (double) epochs * 100) << endl;
 		}
 	}
 
@@ -360,6 +369,12 @@ public:
 		net = network;
 
 		accuracy, epochs, batchSize, maxEpochs, LR, wrong, epoch = 0;
+
+		wrong = 0;
+		epochs = 0;
+
+
+		cout << wrong << endl;
 
 		inputError = new double[net->numInput];
 
