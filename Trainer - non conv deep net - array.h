@@ -18,6 +18,9 @@ protected:
 	// desired accuracy
 	double accuracy;
 
+	// epoch we are on
+	int epoch;
+
 	// number of epochs
 	int epochs;
 
@@ -247,26 +250,44 @@ protected:
 
 		for (int i = 0; i < net->numOutput; i++)
 		{
-			if (net->Round(net->outputNodes[i]) != targets[i])
+			if (net->clampOutput(net->outputNodes[i]) != targets[i])
 			{
 				correct = false;
 
-				cout << "Output: " << net->outputNodes[i] << ", Target: " << targets[i] << endl;
+			//	cout << "Output: " << net->outputNodes[i] << ", Target: " << targets[i] << endl;
 			}
 		}
+
+		epoch++;
+		epochs++;
 
 		if (!correct) wrong++;
 	}
 
 	// run batch
-	void Batch(double** inputs, double** targets)
+	void Batch(double** inputs, double** targets, int index)
 	{
 		for (int i = 0; i < batchSize; i++)
 		{
-			Epoch(inputs[i], targets[i]);
+			Epoch(inputs[index + i], targets[index + i]);
 		}
 
 		UpdateWeights();
+	}
+
+	// run batches
+	void Batches(double** input, double** targets, int batches)
+	{
+		double trainingAccuracy = 0;
+
+		for (int i = 0; i < batches; i++)
+		{
+			Batch(input, targets, i * batchSize);
+
+			trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
+
+			cout << "accuracy: " << trainingAccuracy << endl;
+		}
 	}
 
 
@@ -282,21 +303,19 @@ public:
 	{
 		double trainingAccuracy = 0;
 
-		int epoch = 0;
-
 		int index = 0;
 
-		while (epoch < epochs && epoch < maxEpochs && trainingAccuracy < accuracy)
+		while (epoch < epochs && epoch < maxEpochs)
 		{
-			Batch(data[index], targets[index]);
-
-			epoch += batchSize;
+			Batches(data[index], targets[index], epochs / batchSize);
 
 			trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
 
 			cout << "Accuracy: " << trainingAccuracy << ", Epoch: " << epoch << endl;
 
-			wrong = 0;
+			//wrong = 0;
+
+			index++;
 		}
 
 
@@ -326,7 +345,7 @@ public:
 	{
 		net = NULL;
 
-		accuracy, epochs, batchSize, maxEpochs, LR, wrong = 0;
+		accuracy, epochs, batchSize, maxEpochs, LR, wrong, epoch = 0;
 
 		inputError, hiddenError, outputError = NULL;
 
@@ -340,7 +359,7 @@ public:
 
 		net = network;
 
-		accuracy, epochs, batchSize, maxEpochs, LR, wrong = 0;
+		accuracy, epochs, batchSize, maxEpochs, LR, wrong, epoch = 0;
 
 		inputError = new double[net->numInput];
 

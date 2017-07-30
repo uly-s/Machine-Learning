@@ -11,9 +11,11 @@ int main()
 
 	int index = 0;
 
-	double*** training = new double**[10];
+	double*** training = new double**[1];
 
-	double*** labels = new double**[10];
+	double*** labels = new double**[1];
+
+	double*** labelArrays = new double**[1];
 
 	for (int i = 0; i < 1; i++)
 	{
@@ -21,14 +23,26 @@ int main()
 
 		labels[i] = new double*[1000];
 
+		labelArrays[i] = new double*[1000];
+
 		for (int j = 0; j < 1000; j++)
 		{
 			training[i][j] = new double[784];
 			labels[i][j] = new double[1];
+			labelArrays[i][j] = new double[10];
 
 			labels[i][j][0] = 0;
 
+			
+
 			cin >> labels[i][j][0];
+
+			for (int k = 0; k < 10; k++)
+			{
+				labelArrays[i][j][k] = 0;
+
+				if (k == labels[i][j][k]) labelArrays[i][j][k] = 1;
+			}
 
 			cin >> dummy;
 
@@ -43,15 +57,15 @@ int main()
 		}
 	}
 
-	DeepNet* deepnet = new DeepNet(784, 600, 500, 1);
+	DeepNet* deepnet = new DeepNet(784, 800, 600, 10);
 
 	Trainer* trainer = new Trainer(deepnet);
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(10, 0.01, 90, 100);
+	trainer->Parameters(50, 0.1, 90, 1000);
 	
-	trainer->Train(training, labels, 100);
+	trainer->Train(training, labelArrays, 1000);
 	
 
 	return 0;

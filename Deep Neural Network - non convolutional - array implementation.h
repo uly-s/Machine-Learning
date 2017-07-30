@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <math.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -70,6 +71,12 @@ protected:
 		return tanh(x);
 	}
 
+	// rectified linear activation function
+	double rectifiedLinear(double x)
+	{
+		return max(0.0, x);
+	}
+
 	// activation function, uses 1. sigmoid, 2. softmax, or 3. tanh
 	double ActivationFunction( double x)
 	{
@@ -127,28 +134,11 @@ protected:
 		FeedOutput();
 	}
 
-	// backpropagate errors through network
-	void backpropagate(double* desiredValues)
-	{
-
-
-
-	}
-
-	// backpropagation algorithm
-
 
 public:
 
 	// PUBLIC METHODS
 
-	void test(const double& data)
-	{
-		
-		//cout << Round(data) << endl;
-		
-
-	}
 
 	// feed pattern foward, return results
 	
@@ -401,6 +391,12 @@ protected:
 	}
 
 	// clamp output to a round number
+	int clampOutput(double x)
+	{
+		if (x > 0.9) return 1;
+		else if (x < 0.1) return 0;
+		else return -1;
+	}
 
 	// round number, for formatting output
 	int Round(double x)
