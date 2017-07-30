@@ -142,7 +142,6 @@ public:
 
 	// feed pattern foward, return results
 	
-
 	// initialize weights to random values
 	void InitializeWeights()
 	{
@@ -215,7 +214,102 @@ public:
 	// nodes
 	DeepNet(int numInput, int numHiddenLayers, int* hiddenDimensions, int numOutput)
 	{
+		this->numInput = numInput;
 
+		hiddenLayers = numHiddenLayers;
+
+		numHidden = 0;
+
+		hiddenIndex = hiddenLayers - 1;
+
+		hiddenWidths = new int[hiddenLayers];
+
+		for (int i = 0; i < hiddenLayers; i++)
+		{
+			hiddenWidths[i] = hiddenDimensions[i];
+			numHidden += hiddenDimensions[i];
+		}
+
+
+		this->numOutput = numOutput;
+
+		//cout << "test" << endl;
+
+		// initialize nodes, add 1 for bias neurons
+		inputNodes = new double[numInput + 1];
+		hiddenNodes = new double*[hiddenLayers];
+		outputNodes = new double[numOutput];
+
+		// zero initialize nodes
+		zero(inputNodes, numInput + 1);
+
+		// set bias neuron
+		inputNodes[numInput] = -1;
+
+		// initialize each hidden layer and zero them out
+		for (int i = 0; i < hiddenLayers; i++)
+		{
+			hiddenNodes[i] = new double[hiddenWidths[i] + 1];
+
+			zero(hiddenNodes[i], hiddenWidths[i] + 1);
+
+			// set bias neuron
+			hiddenNodes[i][hiddenWidths[i]] = -1;
+		}
+
+		// zero output
+		zero(outputNodes, numOutput);
+
+		// initialize weights
+
+		// initialize input to hidden weights
+		inputWeights = new double*[numInput];
+
+		// initialize hidden to hidden weights, one less than the number of hidden layers
+		// because we are using output weights for the last set of weights
+		// to simplify things
+		hiddenWeights = new double**[hiddenIndex];
+
+		// initialize output weights (to the width of the last hidden layer at index
+		// 1 less than the number of layers)
+		outputWeights = new double*[hiddenWidths[hiddenIndex] + 1];
+
+		// zero input weights
+		for (int i = 0; i <= numInput; i++)
+		{
+			inputWeights[i] = new double[hiddenWidths[0] + 1];
+
+			// for each input node, set the weights for its connections to the first
+			// layer of hidden nodes
+			zero(inputWeights[i], hiddenWidths[0] + 1);
+		};
+
+		// zero hidden weights
+		for (int i = 0; i < hiddenIndex; i++)
+		{
+			hiddenWeights[i] = new double*[hiddenWidths[i] + 1];
+
+			for (int j = 0; j <= hiddenWidths[i]; j++)
+			{
+				hiddenWeights[i][j] = new double[hiddenWidths[i + 1] + 1];
+
+				for (int k = 0; k <= hiddenWidths[i + 1]; k++)
+				{
+					hiddenWeights[i][j][k] = 0;
+				}
+			}
+		}
+
+		// zero output weights, one weight from each of the last hidden nodes to each output nodes
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			outputWeights[i] = new double[numOutput];
+
+			for (int j = 0; j < numOutput; j++)
+			{
+				outputWeights[i][j] = 0;
+			}
+		}
 
 	}
 
@@ -316,7 +410,98 @@ public:
 	// deeper initializer, hard coded as three hidden layers
 	DeepNet(int numInput, int numHidden1, int numHidden2, int numHidden3, int numOutput)
 	{
+		this->numInput = numInput;
 
+		hiddenLayers = 3;
+
+		numHidden = numHidden1 + numHidden2 + numHidden3;
+
+		hiddenIndex = hiddenLayers - 1;
+
+		hiddenWidths = new int[3];
+		hiddenWidths[0] = numHidden1;
+		hiddenWidths[1] = numHidden2;
+		hiddenWidths[2] = numHidden3;
+
+		this->numOutput = numOutput;
+
+		//cout << "test" << endl;
+
+		// initialize nodes, add 1 for bias neurons
+		inputNodes = new double[numInput + 1];
+		hiddenNodes = new double*[hiddenLayers];
+		outputNodes = new double[numOutput];
+
+		// zero initialize nodes
+		zero(inputNodes, numInput + 1);
+
+		// set bias neuron
+		inputNodes[numInput] = -1;
+
+		// initialize each hidden layer and zero them out
+		for (int i = 0; i < hiddenLayers; i++)
+		{
+			hiddenNodes[i] = new double[hiddenWidths[i] + 1];
+
+			zero(hiddenNodes[i], hiddenWidths[i] + 1);
+
+			// set bias neuron
+			hiddenNodes[i][hiddenWidths[i]] = -1;
+		}
+
+		// zero output
+		zero(outputNodes, numOutput);
+
+		// initialize weights
+
+		// initialize input to hidden weights
+		inputWeights = new double*[numInput];
+
+		// initialize hidden to hidden weights, one less than the number of hidden layers
+		// because we are using output weights for the last set of weights
+		// to simplify things
+		hiddenWeights = new double**[hiddenIndex];
+
+		// initialize output weights (to the width of the last hidden layer at index
+		// 1 less than the number of layers)
+		outputWeights = new double*[hiddenWidths[hiddenIndex] + 1];
+
+		// zero input weights
+		for (int i = 0; i <= numInput; i++)
+		{
+			inputWeights[i] = new double[hiddenWidths[0] + 1];
+
+			// for each input node, set the weights for its connections to the first
+			// layer of hidden nodes
+			zero(inputWeights[i], hiddenWidths[0] + 1);
+		};
+
+		// zero hidden weights
+		for (int i = 0; i < hiddenIndex; i++)
+		{
+			hiddenWeights[i] = new double*[hiddenWidths[i] + 1];
+
+			for (int j = 0; j <= hiddenWidths[i]; j++)
+			{
+				hiddenWeights[i][j] = new double[hiddenWidths[i + 1] + 1];
+
+				for (int k = 0; k <= hiddenWidths[i + 1]; k++)
+				{
+					hiddenWeights[i][j][k] = 0;
+				}
+			}
+		}
+
+		// zero output weights, one weight from each of the last hidden nodes to each output nodes
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			outputWeights[i] = new double[numOutput];
+
+			for (int j = 0; j < numOutput; j++)
+			{
+				outputWeights[i][j] = 0;
+			}
+		}
 	}
 
 	// copy constructor

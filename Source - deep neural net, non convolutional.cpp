@@ -61,7 +61,17 @@ int main()
 		}
 	}
 
-	DeepNet* deepnet = new DeepNet(784, 800, 600, 10);
+	int* dimensions = new int[100];
+
+	for (int i = 0; i < 100; i++)
+	{
+		dimensions[i] = 0;
+
+		if (i % 2 == 0) dimensions[i] = 28;
+		else dimensions[i] = 28;
+	}
+
+	DeepNet* deepnet = new DeepNet(784, 100, dimensions, 10);
 
 	Trainer* trainer = new Trainer(deepnet);
 
