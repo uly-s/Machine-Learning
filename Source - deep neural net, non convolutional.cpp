@@ -71,7 +71,7 @@ int main()
 		else dimensions[i] = 28;
 	}
 
-	DeepNet* deepnet = new DeepNet(784, 100, dimensions, 10);
+	DeepNet* deepnet = new DeepNet(784, 28, 56, 14, 10);
 
 	Trainer* trainer = new Trainer(deepnet);
 
