@@ -74,7 +74,7 @@ int main()
 
 	LoadTrainingData(1, training, labels, labelArrays);
 
-	DeepNet* deepnet = new DeepNet(784, 28, 14, 10);
+	DeepNet* deepnet = new DeepNet(784, 28, 14, 14, 10);
 
 	Trainer* trainer = new Trainer(deepnet);
 

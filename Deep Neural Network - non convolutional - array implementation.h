@@ -201,11 +201,50 @@ public:
 			file << endl;
 		}
 
+		// new line
 		file << endl;
 
 		// save hidden weights
 
 		// for each hidden layer
+		for (int i = 0; i < hiddenIndex; i++)
+		{
+			// for each hidden node in the first layer
+			for (int j = 0; j <= hiddenWidths[i]; j++)
+			{
+				// for each node in the next layer
+				for (int k = 0; k <= hiddenWidths[i + 1]; k++)
+				{
+					// send weight to file plus a space
+					file << hiddenWeights[i][j][k] << " ";
+				}
+
+				// send an endl
+				file << endl;
+			}
+
+			// send an endl
+			file << endl;
+		}
+
+		// save output weights
+
+		// for each node in the last hidden layer
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			// for each output node
+			for (int j = 0; j < numOutput; j++)
+			{
+				file << outputWeights[i][j] << " ";
+			}
+
+			file << endl;
+
+		}
+
+		file << endl;
+
+		file.close();
 
 
 	}
