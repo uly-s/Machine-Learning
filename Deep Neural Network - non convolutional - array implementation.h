@@ -250,6 +250,52 @@ public:
 	}
 
 	// load weights
+	void LoadWeights(ifstream& file)
+	{
+		// read in input weights
+
+		// for each input node
+		for (int i = 0; i <= numInput; i++)
+		{
+			// for each node in the top hidden layer
+			for (int j = 0; j <= hiddenWidths[0]; j++)
+			{
+				file >> inputWeights[i][j];
+			}
+		}
+
+		// read in hidden weights
+
+		// for each hidden layer
+		for (int i = 0; i < hiddenIndex; i++)
+		{
+			// for each hidden node in this layer
+			for (int j = 0; j <= hiddenWidths[i]; j++)
+			{
+				// for each node in the next layer
+				for (int k = 0; k <= hiddenWidths[i + 1]; k++)
+				{
+					file >> hiddenWeights[i][j][k];
+				}
+			}
+		}
+
+		// read in output weights
+
+		// for each node in the last hidden layer
+		for (int i = 0; i <= hiddenWidths[hiddenIndex]; i++)
+		{
+			// for each output node
+			for (int j = 0; j < numOutput; j++)
+			{
+				file >> outputWeights[i][j];
+			}
+		}
+
+		// close stream
+		file.close();
+		
+	}
 
 	// OPERATORS
 

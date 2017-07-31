@@ -70,25 +70,29 @@ int main()
 
 	double*** labelArrays = new double**[10];
 
-	
-
-	LoadTrainingData(1, training, labels, labelArrays);
-
-	DeepNet* deepnet = new DeepNet(784, 28, 14, 14, 10);
-
-	Trainer* trainer = new Trainer(deepnet);
-
-	deepnet->InitializeWeights();
-
-	trainer->Parameters(50, 0.1, 90, 5000, 1000);
-	
-	trainer->Train(training, labelArrays, 1000, 0);
-
-	ofstream weights;
+	ifstream weights;
 
 	weights.open("weights - deep non conv net.txt");
 
-	deepnet->SaveWeights(weights);
+	LoadTrainingData(5, training, labels, labelArrays);
+
+	DeepNet* deepnet = new DeepNet(784, 28, 14, 14, 10);
+
+	deepnet->LoadWeights(weights);
+
+	Trainer* trainer = new Trainer(deepnet);
+
+	//deepnet->InitializeWeights();
+
+	trainer->Parameters(50, 0.1, 90, 5000, 1000);
+	
+	trainer->Train(training, labelArrays, 2000, 3);
+
+	//ofstream weights;
+
+	//weights.open("weights - deep non conv net.txt");
+
+	//deepnet->SaveWeights(weights);
 
 
 
