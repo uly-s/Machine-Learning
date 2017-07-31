@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <algorithm>
 
@@ -182,6 +183,32 @@ public:
 	}
 
 	// save weights
+	void SaveWeights(ofstream& file)
+	{
+		// output input weights
+	
+		// for each input node
+		for (int i = 0; i <= numInput; i++)
+		{
+			// for each node in the top hidden layer
+			for (int j = 0; j <= hiddenWidths[0]; j++)
+			{
+				// send weight to ostream, as well as a space
+				file << inputWeights[i][j] << " ";
+			}
+
+			// send a new line
+			file << endl;
+		}
+
+		file << endl;
+
+		// save hidden weights
+
+		// for each hidden layer
+
+
+	}
 
 	// load weights
 

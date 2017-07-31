@@ -1,23 +1,17 @@
 #include <iostream>
+#include <fstream>
 #include <typeinfo>
 #include <vector>
 #include "Deep Neural Network - non convolutional - array implementation.h"
 #include "Trainer - non conv deep net - array.h"
 
-
-int main()
+void LoadTrainingData(int thousands, double*** training, double*** labels, double*** labelArrays)
 {
 	char dummy = ' ';
 
 	int index = 0;
 
-	double*** training = new double**[10];
-
-	double*** labels = new double**[10];
-
-	double*** labelArrays = new double**[10];
-
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < thousands; i++)
 	{
 		training[i] = new double*[1000];
 
@@ -33,7 +27,7 @@ int main()
 
 			labels[i][j][0] = 0;
 
-			
+
 
 			cin >> labels[i][j][0];
 
@@ -53,33 +47,54 @@ int main()
 			for (int k = 0; k < 784; k++)
 			{
 				training[i][j][k] = 0;
-				
+
 				cin >> training[i][j][k];
 
 				if (k < 783) cin >> dummy;
 			}
 		}
 	}
+}
 
-	int* dimensions = new int[100];
 
-	for (int i = 0; i < 100; i++)
-	{
-		dimensions[i] = 0;
 
-		if (i % 2 == 0) dimensions[i] = 28;
-		else dimensions[i] = 28;
-	}
+int main()
+{
+	char dummy = ' ';
 
-	DeepNet* deepnet = new DeepNet(784, 28, 56, 14, 10);
+	int index = 0;
+
+	double*** training = new double**[10];
+
+	double*** labels = new double**[10];
+
+	double*** labelArrays = new double**[10];
+
+	
+
+	LoadTrainingData(1, training, labels, labelArrays);
+
+	DeepNet* deepnet = new DeepNet(784, 28, 14, 10);
 
 	Trainer* trainer = new Trainer(deepnet);
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(50, 0.1, 90, 2000, 1000);
+	trainer->Parameters(50, 0.1, 90, 5000, 1000);
 	
-	trainer->Train(training, labelArrays, 2000);
+	trainer->Train(training, labelArrays, 1000, 0);
+
+	ofstream weights;
+
+	weights.open("weights - deep non conv net.txt");
+
+	deepnet->SaveWeights(weights);
+
+
+
+
+
+
 	
 
 	return 0;

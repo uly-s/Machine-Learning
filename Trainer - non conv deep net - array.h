@@ -303,13 +303,13 @@ public:
 	
 	
 	// train on data for some number of epochs
-	void Train(double*** data, double*** targets, int epochs)
+	void Train(double*** data, double*** targets, int epochs, int setIndex)
 	{
 		double trainingAccuracy = 0;
 
 		int index = 0;
 
-		int set = 0;
+		int set = setIndex;
 
 		while (epoch < epochs && epoch < maxEpochs)
 		{
