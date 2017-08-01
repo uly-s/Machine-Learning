@@ -50,6 +50,8 @@ void LoadTrainingData(int thousands, double*** training, double*** labels, doubl
 
 				cin >> training[i][j][k];
 
+				if (training[i][j][k] > 0) training[i][j][k] = 1;
+
 				if (k < 783) cin >> dummy;
 			}
 		}
@@ -60,46 +62,25 @@ void LoadTrainingData(int thousands, double*** training, double*** labels, doubl
 
 int main()
 {
-	char dummy = ' ';
-
-	int index = 0;
-
 	double*** training = new double**[10];
 
 	double*** labels = new double**[10];
 
 	double*** labelArrays = new double**[10];
 
-	ifstream weights;
+	LoadTrainingData(2, training, labels, labelArrays);
 
-	weights.open("weights - deep non conv net.txt");
-
-	LoadTrainingData(5, training, labels, labelArrays);
-
-	DeepNet* deepnet = new DeepNet(784, 28, 14, 14, 10);
-
-	deepnet->LoadWeights(weights);
-
+	DeepNet* deepnet = new DeepNet(784, 28, 14, 10, 10);
+	
 	Trainer* trainer = new Trainer(deepnet);
 
-	//deepnet->InitializeWeights();
+	deepnet->InitializeWeights();
 
-	trainer->Parameters(50, 0.1, 90, 5000, 1000);
+	trainer->Parameters(50, 1.0, 90, 2000, 1000);
 	
-	trainer->Train(training, labelArrays, 2000, 3);
+	trainer->Train(training, labelArrays, 1000, 0);
 
-	//ofstream weights;
-
-	//weights.open("weights - deep non conv net.txt");
-
-	//deepnet->SaveWeights(weights);
-
-
-
-
-
-
-	
+	cout << deepnet->getSetAccuracy(training[1], labelArrays[1], 1000) << endl;
 
 	return 0;
 }

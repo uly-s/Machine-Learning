@@ -79,9 +79,9 @@ protected:
 	}
 
 	// activation function, uses 1. sigmoid, 2. softmax, or 3. tanh
-	double ActivationFunction( double x)
+	double ActivationFunction(double x)
 	{
-		return sigmoid(x);
+		return rectifiedLinear(x);
 	}
 
 	// feed input
@@ -142,6 +142,39 @@ public:
 
 
 	// feed pattern foward, return results
+
+	// get set accuracy
+	double getSetAccuracy(double** inputs, double** targets, int size)
+	{
+		double accuracy = 0;
+
+		int wrong = 0;
+
+		bool right = true;
+
+		for (int i = 0; i < size; i++)
+		{
+			FeedFoward(inputs[i]);
+
+			right = true;
+
+			for (int j = 0; j < numOutput; j++)
+			{
+			
+
+				if (clampOutput(outputNodes[j]) != targets[i][j])
+				{
+					right = false;
+				}
+			}
+
+			if (!right) wrong++;
+		}
+
+		accuracy = 100 - ((double) wrong / (double) size * 100);
+
+		return accuracy;
+	}
 	
 	// initialize weights to random values
 	void InitializeWeights()
