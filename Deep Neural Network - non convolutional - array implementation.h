@@ -81,7 +81,7 @@ protected:
 	// activation function, uses 1. sigmoid, 2. softmax, or 3. tanh
 	double ActivationFunction(double x)
 	{
-		return rectifiedLinear(x);
+		return sigmoid(x);
 	}
 
 	// feed input
@@ -121,7 +121,7 @@ protected:
 	{
 		for (int i = 0; i < numOutput; i++)
 		{
-			outputNodes[i] = clampOutput(ActivationFunction(weightedOutput(i)));
+			outputNodes[i] = ActivationFunction(weightedOutput(i));
 		}
 	};
 
@@ -139,7 +139,6 @@ protected:
 public:
 
 	// PUBLIC METHODS
-
 
 	// feed pattern foward, return results
 
@@ -333,6 +332,12 @@ public:
 	// OPERATORS
 
 	// assignment operator
+	DeepNet& operator= (DeepNet& net)
+	{
+
+
+		return *this;
+	}
 
 	// ostream operator
 	friend ostream& operator<< (ostream& os, DeepNet& net)
@@ -658,6 +663,23 @@ public:
 	// destructor
 	~DeepNet()
 	{
+		if (inputNodes != NULL) delete[] inputNodes;
+
+		if (hiddenNodes != NULL) delete[] hiddenNodes;
+
+		if (outputNodes != NULL) delete[] outputNodes;
+
+		if (hiddenWidths != NULL) delete[] hiddenWidths;
+
+		if (inputWeights != NULL) delete[] inputWeights;
+
+		if (hiddenWeights != NULL) delete[] hiddenWeights;
+
+		if (outputWeights != NULL) delete[] outputWeights;
+
+		inputNodes, hiddenNodes, outputNodes, hiddenWidths,
+			inputWeights, hiddenWeights, outputWeights = NULL;
+
 
 	}
 

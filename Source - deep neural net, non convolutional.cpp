@@ -59,7 +59,6 @@ void LoadTrainingData(int thousands, double*** training, double*** labels, doubl
 }
 
 
-
 int main()
 {
 	double*** training = new double**[10];
@@ -70,13 +69,13 @@ int main()
 
 	LoadTrainingData(2, training, labels, labelArrays);
 
-	DeepNet* deepnet = new DeepNet(784, 28, 14, 10, 10);
+	DeepNet* deepnet = new DeepNet(784, 28, 14, 10);
 	
 	Trainer* trainer = new Trainer(deepnet);
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(50, 1.0, 90, 2000, 1000);
+	trainer->Parameters(25, 1.0, 90, 9000, 1000);
 	
 	trainer->Train(training, labelArrays, 1000, 0);
 

@@ -298,8 +298,6 @@ protected:
 	// get output error gradient
 	double getOutputErrorGradient(double desiredValue, double actualValue)
 	{
-		//cout << "output error gradient: \n\n" << desiredValue << " " << actualValue << "\n\n";
-
 		return actualValue * (1 - actualValue) * (desiredValue - actualValue);
 	}
 

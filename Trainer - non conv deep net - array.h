@@ -45,6 +45,15 @@ protected:
 	// output error
 	double* outputError;
 
+	// input error gradient
+	double* inputGradient;
+
+	// hidden error gradient
+	double** hiddenGradient;
+
+	// output gradient
+	double* outputGradient;
+
 	// changed to input weights
 	double** deltaInput;
 
@@ -63,6 +72,8 @@ protected:
 		for (int i = 0; i < net->numOutput; i++)
 		{
 			outputError[i] = targets[i] - net->outputNodes[i];
+
+			outputGradient[i] = targets[i] * (1 - targets[i]) * outputError[i];
 		}
 
 		// call backpropagate output
@@ -73,17 +84,6 @@ protected:
 
 		// call backpropagate input
 		backpropagateInput();
-
-		// get weight changes
-
-		// set delta input
-		//setDeltaInput();
-
-		// set delta hidden
-		//setDeltaHidden();
-
-		// set delta output
-		//setDeltaOutput();
 
 	}
 
@@ -96,16 +96,23 @@ protected:
 			// clear hidden error
 			hiddenError[net->hiddenIndex][i] = 0;
 
+			// get weighted sum
+			double sum = 0;
+
 			// multiply the error at output by the weight of the hidden node leading to that output
 			// to get the weighted rror at that node
 			for (int j = 0; j < net->numOutput; j++)
 			{
 				hiddenError[net->hiddenIndex][i] += outputError[j] * net->outputWeights[i][j];
 
+				sum += net->outputWeights[i][j] * outputGradient[j];
+
 				// change in output equals learning rate times error at node times
 				// sigmoid prime of node value times node value
 				deltaOutput[i][j] += LR * outputError[i] * net->sigmoidPrime(net->outputNodes[i]) * net->outputNodes[i];
 			}
+
+			hiddenGradient[net->hiddenIndex][i] = net->hiddenNodes[net->hiddenIndex][i] * (1 - net->hiddenNodes[net->hiddenIndex][i]) * sum;
 		}
 
 
@@ -116,23 +123,32 @@ protected:
 	{
 		// for each hidden layer, get the weighted error
 		// from the previous layer
-		for (int i = net->hiddenIndex - 1; i > 0; i--)
+		for (int i = net->hiddenIndex; i > 0; i--)
 		{
+
 			// for each node in the layer
 			for (int j = 0; j <= net->hiddenWidths[i]; j++)
 			{
 				// clear hidden error
 				hiddenError[i][j] = 0;
 
+				// get weighted sum
+				double sum = 0;
+
 				// for each hidden weight
 				for (int k = 0; k <= net->hiddenWidths[i + 1]; k++)
 				{
 					hiddenError[i][j] += hiddenError[i + 1][j] * net->hiddenWeights[i][j][k];
 
+					sum += hiddenGradient[i + 1][j] * net->hiddenWeights[i][j][k];
+
+
 					// change in weight equals learning rate times error at node
 					// times sigmoid prime of node value times node value
 					deltaHidden[i][j][k] += LR * hiddenError[i][j] * net->sigmoidPrime(net->hiddenNodes[i][j]) * net->hiddenNodes[i][j];
 				}
+
+				hiddenGradient[i][j] = net->hiddenNodes[i][j] * (1 - net->hiddenNodes[i][j]) * sum;
 			}
 		}
 	}
@@ -146,6 +162,8 @@ protected:
 			// clear input error
 			inputError[i] = 0;
 
+			double sum = 0;
+
 			// for each node in the top hidden layer
 			for (int j = 0; j <= net->hiddenWidths[0]; j++)
 			{
@@ -154,58 +172,8 @@ protected:
 				// change in input equals learning rate times error at node times sigmoid prime of input times input
 				deltaInput[i][j] += LR * inputError[i] * net->sigmoidPrime(net->inputNodes[i]) * net->inputNodes[i];
 			}
-		}
-	}
 
-	// set input weight changes
-	void setDeltaInput()
-	{
-		// for each input node
-		for (int i = 0; i < net->numInput; i++)
-		{
-			// for each node in the first hidden layer
-			for (int j = 0; j <= net->hiddenWidths[0]; j++)
-			{
-				// change in input equals learning rate times error at node times sigmoid prime of input times input
-				deltaInput[i][j] += LR * inputError[i] * net->sigmoidPrime(net->inputNodes[i]) * net->inputNodes[i];
-			}
-		}
-	}
-
-	// set hidden weight changes
-	void setDeltaHidden()
-	{
-		// for each hidden layer
-		for (int i = 0; i < net->hiddenIndex; i++)
-		{
-			// for each hiden node in the layer
-			for (int j = 0; j <= net->hiddenWidths[i]; j++)
-			{
-				// for each hidden weight
-				for (int k = 0; k <= net->hiddenWidths[i + 1]; i++)
-				{
-					// change in weight equals learning rate times error at node
-					// times sigmoid prime of node value times node value
-					deltaHidden[i][j][k] += LR * hiddenError[i][j] * net->sigmoidPrime(net->hiddenNodes[i][j]) * net->hiddenNodes[i][j];
-				}
-			}
-		}
-
-	};
-
-	// set output weight changes
-	void setDeltaOutput()
-	{
-		// for each of the last nodes in the hidden layer
-		for (int i = 0; i <= net->hiddenWidths[net->hiddenIndex]; i++)
-		{
-			// for each output node
-			for (int j = 0; j < net->numOutput; j++)
-			{
-				// change in output equals learning rate times error at node times
-				// sigmoid prime of node value times node value
-				deltaOutput[i][j] += LR * outputError[i] * net->sigmoidPrime(net->outputNodes[i]) * net->outputNodes[i];
-			}
+			inputGradient[i] = net->inputNodes[i] * (1 - net->inputNodes[i]) * sum;
 		}
 	}
 
@@ -363,6 +331,8 @@ public:
 
 		inputError, hiddenError, outputError = NULL;
 
+		inputGradient, hiddenGradient, outputGradient = NULL;
+
 		deltaInput, deltaHidden, deltaOutput = NULL;
 	}
 
@@ -379,7 +349,7 @@ public:
 		epochs = 0;
 		setSize = 0;
 
-		inputError = new double[net->numInput];
+		inputError = new double[net->numInput + 1];
 
 		for (int i = 0; i <= net->numInput; i++)
 		{
@@ -392,7 +362,7 @@ public:
 
 		for (int i = 0; i < net->hiddenLayers; i++)
 		{
-			hiddenError[i] = new double[net->hiddenWidths[i]];
+			hiddenError[i] = new double[net->hiddenWidths[i] + 1];
 
 			for (int j = 0; j <= net->hiddenWidths[i]; j++)
 			{
@@ -408,6 +378,32 @@ public:
 		{
 			outputError[i] = 0;
 
+		}
+
+		inputGradient = new double[net->numInput + 1];
+
+		for (int i = 0; i <= net->numInput; i++)
+		{
+			inputGradient[i] = 0;
+		}
+
+		hiddenGradient = new double*[net->hiddenLayers];
+
+		for (int i = 0; i < net->hiddenLayers; i++)
+		{
+			hiddenGradient[i] = new double[net->hiddenWidths[i] + 1];
+
+			for (int j = 0; j <= net->hiddenWidths[i]; j++)
+			{
+				hiddenGradient[i][j] = 0;
+			}
+		}
+
+		outputGradient = new double[net->numOutput];
+
+		for (int i = 0; i < net->numOutput; i++)
+		{
+			outputGradient[i] = 0;
 		}
 
 
