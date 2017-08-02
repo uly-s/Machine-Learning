@@ -2,6 +2,7 @@
 #include <fstream>
 #include <typeinfo>
 #include <vector>
+#include <math.h>
 #include "Deep Neural Network - non convolutional - array implementation.h"
 #include "Trainer - non conv deep net - array.h"
 
@@ -63,25 +64,37 @@ int main()
 {
 	double*** training = new double**[50];
 
+	double** trainingSet = new double*[5000];
+
 	double*** labels = new double**[50];
 
 	double*** labelArrays = new double**[50];
 
-	LoadTrainingData(4, training, labels, labelArrays);
+	//LoadTrainingData(4, training, labels, labelArrays);
 
-	DeepNet* deepnet = new DeepNet(784, 28, 14, 10);
+	DeepNet* deepnet = new DeepNet(784, 28, 112, 224, 10);
 	
 	Trainer* trainer = new Trainer(deepnet);
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(50, 0.1, 90, 5000, 1000);
+	trainer->Parameters(25, 1.0, 90, 5000, 1000);
 	
-	trainer->Train(training, labelArrays, 2000, 0);
+	//trainer->Train(training, labelArrays, 5000, 0);
 
-	cout << deepnet->getSetAccuracy(training[2], labelArrays[2], 1000) << endl;
+	for (int i = 0; i < 2; i++)
+	{
+		//trainer->Train(training, labelArrays, 1000, i);
+	}
 
-	cout << deepnet->getSetAccuracy(training[3], labelArrays[3], 1000) << endl;
+	//cout << deepnet->getSetAccuracy(training[2], labelArrays[2], 1000) << endl;
+
+	//cout << deepnet->getSetAccuracy(training[3], labelArrays[3], 1000) << endl;
+
+	for (int i = 0; i < 10; i++)
+	{
+		cout <<  (int) (rand() % 10) << endl;
+	}
 
 	return 0;
 }

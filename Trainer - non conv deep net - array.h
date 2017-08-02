@@ -36,6 +36,9 @@ protected:
 	// number of wrong answers
 	int wrong;
 
+	// number of wrong ansers in a batch
+	int wrongBatch;
+
 	// input error
 	double* inputError;
 
@@ -300,7 +303,11 @@ protected:
 		epoch++;
 		epochs++;
 
-		if (!correct) wrong++;
+		if (!correct)
+		{
+			wrong++;
+			wrongBatch++;
+		}
 	}
 
 	// run batch
@@ -329,26 +336,31 @@ public:
 
 		int set = setIndex;
 
+		epoch = 0;
+
 		while (epoch < epochs && epoch < maxEpochs)
 		{
 			Batch(data[set], targets[set], index);
 
-			trainingAccuracy = 100 - ((double) wrong / (double) this->batchSize * 100);
-
-			wrong = 0;
-
-			cout << "Accuracy: " << trainingAccuracy << ", Epoch: " << epoch << endl;
-
-			//wrong = 0;
+			cout << "Batch: " << 100 - ((double) wrongBatch / (double) batchSize * 100) << ", epochs: " << this->epochs << endl;
 
 			index += batchSize;
+
+			wrongBatch = 0;
 
 			if (index == setSize || index > setSize)
 			{
 				set++;
 				index = 0;
+				//wrong = 0;
 			}
 		}
+
+		trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
+
+		cout << "Training set accuracy: " << trainingAccuracy << ", wrong: " << wrong << ", epochs: " << epochs << endl;
+
+		wrong = 0;
 
 
 	}
@@ -376,7 +388,7 @@ public:
 	{
 		net = NULL;
 
-		accuracy, epochs, batchSize, maxEpochs, LR, wrong, epoch = 0;
+		accuracy, epochs, batchSize, maxEpochs, LR, wrong, epoch, wrongBatch = 0;
 
 		inputError, hiddenError, outputError = NULL;
 
@@ -395,6 +407,7 @@ public:
 		accuracy, epochs, batchSize, maxEpochs, LR, wrong, epoch = 0;
 
 		wrong = 0;
+		wrongBatch = 0;
 		epochs = 0;
 		setSize = 0;
 

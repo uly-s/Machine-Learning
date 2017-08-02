@@ -94,7 +94,7 @@ int main()
 
 	trainer->setTrainingParameters(0.01, 0.9, false);
 
-	trainer->setStoppingConditions(1000, 90);
+	trainer->setStoppingConditions(5000, 90);
 
 	trainer->PatternSize(18);
 	
