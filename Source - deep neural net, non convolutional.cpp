@@ -61,13 +61,13 @@ void LoadTrainingData(int thousands, double*** training, double*** labels, doubl
 
 int main()
 {
-	double*** training = new double**[10];
+	double*** training = new double**[50];
 
-	double*** labels = new double**[10];
+	double*** labels = new double**[50];
 
-	double*** labelArrays = new double**[10];
+	double*** labelArrays = new double**[50];
 
-	LoadTrainingData(2, training, labels, labelArrays);
+	LoadTrainingData(4, training, labels, labelArrays);
 
 	DeepNet* deepnet = new DeepNet(784, 28, 14, 10);
 	
@@ -75,11 +75,13 @@ int main()
 
 	deepnet->InitializeWeights();
 
-	trainer->Parameters(25, 1.0, 90, 9000, 1000);
+	trainer->Parameters(50, 0.1, 90, 5000, 1000);
 	
-	trainer->Train(training, labelArrays, 1000, 0);
+	trainer->Train(training, labelArrays, 2000, 0);
 
-	cout << deepnet->getSetAccuracy(training[1], labelArrays[1], 1000) << endl;
+	cout << deepnet->getSetAccuracy(training[2], labelArrays[2], 1000) << endl;
+
+	cout << deepnet->getSetAccuracy(training[3], labelArrays[3], 1000) << endl;
 
 	return 0;
 }
