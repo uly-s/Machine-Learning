@@ -76,8 +76,12 @@ protected:
 		{
 			outputError[i] = targets[i] - net->outputNodes[i];
 
+			//cout << "[" << targets[i] << " " << net->outputNodes[i] << "] ";
+
 		//	outputGradient[i] = targets[i] * (1 - targets[i]) * outputError[i];
 		}
+
+		//cout << endl;
 
 		// call backpropagate output
 		backpropagateOutput();
@@ -102,7 +106,7 @@ protected:
 		for (int i = 0; i <= net->hiddenWidths[net->hiddenIndex]; i++)
 		{
 			// clear hidden error
-			//hiddenError[net->hiddenIndex][i] = 0;
+			hiddenError[net->hiddenIndex][i] = 0;
 
 			// get weighted sum
 			//double sum = 0;
@@ -328,35 +332,60 @@ public:
 	
 	
 	// train on data for some number of epochs
-	void Train(double*** data, double*** targets, int epochs, int setIndex)
+	void Train(double** data, double** targets, int epochs)
 	{
 		double trainingAccuracy = 0;
 
 		int index = 0;
 
-		int set = setIndex;
-
 		epoch = 0;
+
+		bool correct = true;
 
 		while (epoch < epochs && epoch < maxEpochs)
 		{
-			Batch(data[set], targets[set], index);
+			for (int i = index; i < index + batchSize && epoch < epochs; i++)
+			{
+				correct = true;
 
-			cout << "Batch: " << 100 - ((double) wrongBatch / (double) batchSize * 100) << ", epochs: " << this->epochs << endl;
+				net->FeedFoward(data[i]);
+
+				backpropagate(targets[i]);
+
+				for (int j = 0; j < net->numOutput; j++)
+				{
+					if (net->clampOutput(net->outputNodes[j]) != targets[i][j])
+					{
+						correct = false;
+					}
+				}
+
+
+				if (!correct)
+				{
+					wrong++;
+					wrongBatch++;
+				}
+
+				epoch++;
+				this->epochs++;
+			}
+
+			UpdateWeights();
+
+
+			cout << "Average: " << 100 - ((double) wrong / (double) this->epochs * 100);
+			
+			cout << ",  batch: " << 100 - ((double) wrongBatch / (double) batchSize * 100)
+				<< ",  epochs: " << this->epochs << endl;
 
 			index += batchSize;
 
 			wrongBatch = 0;
 
-			if (index == setSize || index > setSize)
-			{
-				set++;
-				index = 0;
-				//wrong = 0;
-			}
 		}
 
-		trainingAccuracy = 100 - ((double) wrong / (double) epochs * 100);
+		trainingAccuracy = 100 - ((double) wrong / (double) this->epochs * 100);
 
 		cout << "Training set accuracy: " << trainingAccuracy << ", wrong: " << wrong << ", epochs: " << epochs << endl;
 
@@ -366,7 +395,7 @@ public:
 	}
 
 	// set training parameters, batch size, learning rate, desired accuracy, max epochs
-	void Parameters(int batchSize, double learningRate, double targetAccuracy, int maxEpochs, int setSize)
+	void Parameters(int batchSize, double learningRate, double targetAccuracy, int maxEpochs)
 	{
 		this->batchSize = batchSize;
 		
@@ -375,8 +404,6 @@ public:
 		accuracy = targetAccuracy;
 
 		this->maxEpochs = maxEpochs;
-
-		this->setSize = setSize;
 	}
 
 	// OPERATORS

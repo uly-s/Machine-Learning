@@ -143,7 +143,7 @@ public:
 	// feed pattern foward, return results
 
 	// get set accuracy
-	double getSetAccuracy(double** inputs, double** targets, int size)
+	double getSetAccuracy(double** inputs, double** targets, int size, int index)
 	{
 		double accuracy = 0;
 
@@ -151,7 +151,7 @@ public:
 
 		bool right = true;
 
-		for (int i = 0; i < size; i++)
+		for (int i = index; i < size + index; i++)
 		{
 			FeedFoward(inputs[i]);
 
@@ -159,8 +159,6 @@ public:
 
 			for (int j = 0; j < numOutput; j++)
 			{
-			
-
 				if (clampOutput(outputNodes[j]) != targets[i][j])
 				{
 					right = false;
