@@ -91,7 +91,7 @@ int main()
 	double** targets = new double*[5000];
 
 	// read in x training samples 
-	//LoadTrainingData(2000, labels, patterns, targets);
+	LoadTrainingData(2000, labels, patterns, targets);
 
 	DeepNet* deepnet = new DeepNet(784, 112, 56, 10);
 
