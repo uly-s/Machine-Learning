@@ -1,3 +1,5 @@
+import random
+
 def generate_parent(length, geneSet):
 
   genes = []
@@ -29,7 +31,7 @@ def evolve(get_fitness, targetLength, goal, geneSet, display):
 
   random.seed()
 
-  bestGenome = generate_parent(len(target))
+  bestGenome = generate_parent(targetLength, geneSet)
 
   fittest = get_fitness(bestGenome)
 
@@ -37,7 +39,7 @@ def evolve(get_fitness, targetLength, goal, geneSet, display):
 
   while True:
 
-    child = mutate(bestGenome)
+    child = mutate(bestGenome, geneSet)
 
     fitness = get_fitness(child)
 

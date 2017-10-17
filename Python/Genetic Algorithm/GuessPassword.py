@@ -3,19 +3,7 @@ import random
 
 geneSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.!? 0123456789"
 
-target = "Cedar"
-
-def generate_parent(length):
-
-  genes = []
-
-  while len(genes) < length: 
-
-    sampleSize = min(length - len(genes), len(geneSet))
-
-    genes.extend(random.sample(geneSet, sampleSize))
-
-  return ''.join(genes)
+target = "CedarLikeTheTree"
 
 def get_fitness(guess):
 
@@ -43,31 +31,9 @@ def display(guess):
 
 def main():
 
-  random.seed()
+  length = len(target)
 
-  bestGenome = generate_parent(len(target))
-
-  fittest = get_fitness(bestGenome)
-
-  display(bestGenome)
-
-  while True:
-
-    child = mutate(bestGenome)
-
-    fitness = get_fitness(child)
-
-    if fittest >= fitness:
-      continue
-
-    display(child)
-
-    if fitness >= len(bestGenome):
-      break
-
-    fittest = fitness
-
-    bestGenome = child
+  Genetic.evolve(get_fitness, length, length, geneSet, display)
 
 
 
