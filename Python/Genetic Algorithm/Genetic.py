@@ -1,6 +1,8 @@
 import random
+import datetime
 
 def generate_parent(length, geneSet):
+  """ generates a length parent out of geneSet """
 
   genes = []
 
@@ -14,6 +16,7 @@ def generate_parent(length, geneSet):
 
 
 def mutate(parent, geneSet):
+  """Takes in a parent, makes a change in one gene, returns the child"""
 
   index = random.randrange(0, len(parent))
 
@@ -27,7 +30,24 @@ def mutate(parent, geneSet):
 
   return ''.join(child)
 
+def display(genes, target, startTime):
+  """Generalized display function, pass a genome, the target, and a datetime object of start time"""
+
+  timeDiff = datetime.datetime.now() - startTime
+
+  fitness = get_fitness(genes, target)
+
+  print("{}\t{}\t{}".format(genes, target, timeDiff))
+
+
+def get_fitness(genes, target):
+  """Returns number of of genes in genes that match the target"""
+  return sum(1 for expected, actual in zip(target, guess) if expected == actual)
+
+
+
 def evolve(get_fitness, targetLength, goal, geneSet, display):
+  """ pass he fitness function, target length, desired fitness, the set of genes, and the display function """
 
   random.seed()
 
