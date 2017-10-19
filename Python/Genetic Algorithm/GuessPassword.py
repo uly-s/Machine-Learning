@@ -1,9 +1,9 @@
 import Genetic
 import random
 
-geneSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.!? 0123456789"
+geneSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-target = "Cedar"
+target = "x"
 
 def generate_parent(length):
 
@@ -41,33 +41,58 @@ def display(guess):
 
   print('{} {}'.format(guess, fitness))
 
-def main():
+def evolve():
+  """ wrapper for genetic evolve """
+  Genetic.evolve(get_fitness, len(target), len(target), geneSet, display)
+
+
+
+def main(epochs):
 
   random.seed()
 
-  bestGenome = generate_parent(len(target))
+  sum = 0
 
-  fittest = get_fitness(bestGenome)
+  epoch = 0
 
-  display(bestGenome)
+  while epoch < epochs:
 
-  while True:
+    bestGenome = generate_parent(len(target))
 
-    child = mutate(bestGenome)
+    fittest = get_fitness(bestGenome)
 
-    fitness = get_fitness(child)
+    display(bestGenome)
 
-    if fittest >= fitness:
-      continue
+    generations = 0
 
-    display(child)
+    while True:
 
-    if fitness >= len(bestGenome):
-      break
+      generations += 1
 
-    fittest = fitness
+      child = mutate(bestGenome)
 
-    bestGenome = child
+      fitness = get_fitness(child)
+
+      if fittest >= fitness:
+        continue
+
+      display(child)
+
+      if fitness >= len(bestGenome):
+        break
+
+      fittest = fitness
+
+      bestGenome = child
+
+    sum += generations
+
+    epoch += 1
+
+  avg = sum / epochs
+
+  return avg
+
 
 
 
