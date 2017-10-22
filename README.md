@@ -13,7 +13,7 @@ Genetic Algorithm in progress
   
   Lesson0: Password guessing with simple mutation, pre extraction of genetic engine
   
-  Lesson1: Password guessing with use of a genetic engine module
+  Lesson1: Password guessing with use of a genetic engine module, adition of a chromosome object and integration into engine
   
   Lesson2: Conversion from using strings to list to generalize engine for other projects, objective of lesson is to maximize a binary list
 
