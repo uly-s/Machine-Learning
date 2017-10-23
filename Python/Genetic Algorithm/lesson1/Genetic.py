@@ -10,7 +10,7 @@ class Chromosome:
     self.Fitness = Fitness
     
 
-def generate_parent(length, geneSet):
+def _generate_parent(length, geneSet, get_fitness):
   """ generates a length parent out of geneSet """
 
   genes = []
@@ -21,15 +21,17 @@ def generate_parent(length, geneSet):
 
     genes.extend(random.sample(geneSet, sampleSize))
 
-  return ''.join(genes)
+  fitness = get_fitness(genes)
+
+  return Chromosome(genes, fitness)
 
 
-def mutate(parent, geneSet):
+def _mutate(parent, geneSet, get_fitness):
   """Takes in a parent, makes a change in one gene, returns the child"""
 
-  index = random.randrange(0, len(parent))
+  index = random.randrange(0, len(parent.Genes))
 
-  child = list(parent)
+  child = list(parent.Genes)
 
   mutation, alternate = random.sample(geneSet, 2)
 
@@ -37,9 +39,11 @@ def mutate(parent, geneSet):
       if mutation == child[index] \
       else mutation
 
-  return ''.join(child)
+  fitness = get_fitness(child)
 
-def display(genes, target, startTime):
+  return Chromosome(child, fitness)
+
+def _display(genes, target, startTime, get_fitness):
   """Generalized display function, pass a genome, the target, and a datetime object of start time"""
 
   timeDiff = datetime.datetime.now() - startTime
@@ -49,9 +53,9 @@ def display(genes, target, startTime):
   print("{}\t{}\t{}".format(genes, target, timeDiff))
 
 
-def get_fitness(genes, target):
+def _get_fitness(genes, target):
   """Returns number of of genes in genes that match the target"""
-  return sum(1 for expected, actual in zip(target, guess) if expected == actual)
+  return sum(1 for expected, actual in zip(target, genes) if expected == actual)
 
 
 def evolve(get_fitness, targetLength, goal, geneSet, display):
@@ -59,26 +63,22 @@ def evolve(get_fitness, targetLength, goal, geneSet, display):
 
   random.seed()
 
-  bestGenome = generate_parent(targetLength, geneSet)
+  bestGenome = _generate_parent(targetLength, geneSet, get_fitness)
 
-  fittest = get_fitness(bestGenome)
+  fittest = get_fitness(bestGenome.Genes)
 
-  display(bestGenome)
+  display(bestGenome.Genes)
 
   while True:
 
-    child = mutate(bestGenome, geneSet)
+    child = _mutate(bestGenome, geneSet, get_fitness)
 
-    fitness = get_fitness(child)
-
-    if fittest >= fitness:
+    if bestGenome.Fitness >= child.Fitness:
       continue
 
-    display(child)
+    display(child.Genes)
 
-    if fitness >= len(bestGenome):
-      break
-
-    fittest = fitness
+    if child.Fitness >= goal:
+      return child
 
     bestGenome = child
