@@ -1,9 +1,9 @@
 import Genetic
 import random
 
-geneSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+geneSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .!?,"
 
-target = "xyz012345678"
+target = "Hold your head up high"
 
 def generate_parent(length):
 
