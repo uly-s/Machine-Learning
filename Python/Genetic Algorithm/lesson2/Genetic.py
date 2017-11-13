@@ -47,7 +47,7 @@ def get_fitness(genes, target):
 
 
 def evolve(get_fitness, targetLength, goal, geneSet, display):
-  """ pass he fitness function, target length, desired fitness, the set of genes, and the display function """
+  """ pass the fitness function, target length, desired fitness, the set of genes, and the display function """
 
   random.seed()
 
