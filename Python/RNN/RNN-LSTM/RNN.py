@@ -1,10 +1,23 @@
 import numpy as np
+from scipy.special import expit
 
+# imported functions
+def sigmoid(z):
+    return expit(z)
 
+def sigmoid_prime(z):
+    return expit(z) * (1 - expit(z))
+
+def tanh(z):
+    return np.tanh(z)
+
+def dot(a, b):
+    return np.dot(a, b)
 
 
 
 class RNN:
+    """A recurrent Neural Network with LSTM"""
 
     def __init__(self, cell_count, xdim):
         """Pass the memory cell count and the input dimension,
@@ -74,5 +87,42 @@ class RNN:
         self.dbi = np.zeros_like(self.bi)
         self.dbf = np.zeros_like(self.bf)
         self.dbo = np.zeros_like(self.bo)
+
+class Memory:
+    """Holds a state of the network"""
+
+    def __init__(self, mem_cells):
+        """ pass the number of memory cells"""
+
+        self.g = np.zeros(mem_cells)
+        self.i = np.zeros(mem_cells)
+        self.f = np.zeros(mem_cells)
+        self.o = np.zeros(mem_cells)
+        self.s = np.zeros(mem_cells)
+        self.h = np.zeros(mem_cells)
+        self.ds = np.zeros_like(self.s)
+        self.dh = np.zeros_like(self.s)
+
+class Node:
+    """ A single long short term memory node"""
+
+    def __init__(self, net, state):
+        """Pass the network parameters (net) and the network state (memory object)"""
+
+        self.network = net
+        self.memory = state
+
+        # concatenated input
+        xc = None
+
+class LSTM:
+    """ The network with long short term memory"""
+
+    def __init__(self, net):
+        """ Pass a RNN object as seen above"""
+
+        self.RNN = net
+        self.Nodes = []
+        self.inputs = []
 
 
