@@ -88,7 +88,7 @@ class RNN:
         self.dbf = np.zeros_like(self.bf)
         self.dbo = np.zeros_like(self.bo)
 
-class Memory:
+class State:
     """Holds a state of the network"""
 
     def __init__(self, mem_cells):
@@ -109,11 +109,46 @@ class Node:
     def __init__(self, net, state):
         """Pass the network parameters (net) and the network state (memory object)"""
 
-        self.network = net
-        self.memory = state
+        self.net = net
+        self.state = state
 
         # concatenated input
-        xc = None
+        self.xc = None
+
+    def feedforward(self, x, s0 = None, h0 = None):
+        """ Feed pattern forward through network
+            concatenated with previous hidden state h0 """
+
+        if s0 is None: s0 = np.zeros_like(self.state.s)
+        if h0 is None: h0 = np.zeros_like(self.state.h)
+
+        # concatenate input
+        xc = np.hstack(x, h0)
+
+        # input state g = tanh of dot input g weights and xc plus input g bias
+        # input gate i = sigmoid of dot of input gate weights times xc plus input bias bi
+        # forget gate f = sigmoid of dot of forget gates times xc plus forget bias
+        # output gate o = sigmoid of dot of output weights times xc plus output bias
+        # new state s = g * i + s0 * f
+        # new state h = new s * o
+
+        self.state.g = tanh(dot(self.net.Wg, xc) + self.net.bg)
+        self.state.i = sigmoid(dot(self.net.Wi, xc) + self.net.bi)
+        self.state.f = sigmoid(dot(self.net.Wf, xc) + self.net.bf)
+        self.state.o = sigmoid(dot(self.net.Wo, xc) + self.net.bo)
+        self.state.s = self.state.g * self.state.i + s0 * self.state.f
+        self.state.h = self.state.s * self.state.o
+
+        # assign new xc
+        self.xc = xc
+
+    def backprop(self, ds, dh):
+        """ Backpropagate through a single node
+            needs the difference in the s and h states
+            calculates updates to parameters """
+
+        
+
 
 class LSTM:
     """ The network with long short term memory"""
