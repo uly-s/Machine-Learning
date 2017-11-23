@@ -110,7 +110,7 @@ class Node:
         """Pass the network parameters (net) and the network state (memory object)"""
 
         self.network = net
-        self.memory = state
+        self.state = state
 
         # concatenated input
         xc = None
