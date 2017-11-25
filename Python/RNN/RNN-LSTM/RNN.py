@@ -11,8 +11,14 @@ def sigmoid_prime(z):
 def tanh(z):
     return np.tanh(z)
 
+def tanh_prime(z):
+    return 1 - z ** 2
+
 def dot(a, b):
     return np.dot(a, b)
+
+def outer(a, b):
+    return np.outer(a, b)
 
 
 
@@ -101,7 +107,7 @@ class State:
         self.s = np.zeros(mem_cells)
         self.h = np.zeros(mem_cells)
         self.ds = np.zeros_like(self.s)
-        self.dh = np.zeros_like(self.s)
+        self.dh = np.zeros_like(self.h)
 
 class Node:
     """ A single long short term memory node"""
@@ -121,6 +127,10 @@ class Node:
 
         if s0 is None: s0 = np.zeros_like(self.state.s)
         if h0 is None: h0 = np.zeros_like(self.state.h)
+
+        # save state
+        self.s0 = s0
+        self.h0 = h0
 
         # concatenate input
         xc = np.hstack(x, h0)
@@ -142,10 +152,43 @@ class Node:
         # assign new xc
         self.xc = xc
 
-    def backprop(self, ds, dh):
+    def backprop(self, xs, xh):
         """ Backpropagate through a single node
             needs the difference in the s and h states
             calculates updates to parameters """
+
+        ds = self.state.o * xh + xs
+        do = self.state.s * xh
+        di = self.state.g * ds
+        dg = self.state.i * ds
+        df = self.s0 * ds
+
+        dix = sigmoid_prime(self.state.i) * di
+        dfx = sigmoid_prime(self.state.f) * df
+        dox = sigmoid_prime(self.state.o) * do
+        dgx = tanh_prime(self.state.g) * dg
+
+        self.net.dWi += outer(dix, self.xc)
+        self.net.dWf += outer(dfx, self.xc)
+        self.net.dWo += outer(dox, self.xc)
+        self.net.dWg += outer(dgx, self.xc)
+
+        self.net.dbi += dix
+        self.net.dbf += dfx
+        self.net.dbo += dox
+        self.net.dbg += dgx
+
+        dxc = np.zeros_like(self.xc)
+        dxc += dot(self.net.Wi.T, dix)
+        dxc += dot(self.net.Wf.T, dfx)
+        dxc += dot(self.net.Wo.T, dox)
+        dxc += dot(self.net.Wg.T, dgx)
+
+        self.state.ds = ds * self.state.f
+        self.state.dh = dxc[self.net.xdim]
+
+
+
 
         
 
@@ -153,11 +196,33 @@ class Node:
 class LSTM:
     """ The network with long short term memory"""
 
-    def __init__(self, net):
+    def __init__(self, cell_count, xdim):
         """ Pass a RNN object as seen above"""
 
-        self.RNN = net
+        self.rnn = RNN(cell_count, xdim)
         self.Nodes = []
         self.inputs = []
+
+    def FeedForward(self, x):
+        """Feed pattern forward, adds to input list, makes a new node
+            x should be a last of numbers"""
+
+        # add pattern to inputs
+        self.inputs.append(x)
+
+        # add a new node for the input
+        self.Nodes.append(Node(self.rnn, State(self.rnn.cell_count)))
+
+        # base case, first input, no recurrence
+        if len(self.inputs) == 1:
+            self.Nodes[0].feedforward(x)
+        else:
+            index = len(self.inputs) - 1 # Recurrent case, the previous state is composed of all previous states
+            self.Nodes[index].feedforward(x, self.Nodes[index-1].state.s, self.Nodes[index-1].state.h)
+
+
+    #def BPTT(self, labels):
+
+
 
 
