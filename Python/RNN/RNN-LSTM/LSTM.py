@@ -49,7 +49,10 @@ class RNN:
         self.LR = learning_rate
 
         # weight matrix, vocab size times vocab size
-        self.W = random((vocab_size, vocab_size))
+        self.W = random((output_size, output_size))
+
+        # gradient matrix
+        self.G = zeros_like(self.W)
 
         # array of inputs, vocab size times input length
         self.inputs = zeros((vocab_size + 1, input_size))
@@ -78,7 +81,7 @@ class RNN:
         # expected output values
         #self.expected = vstack((zeros(expected_output.shape[0]), expected_output.T))
 
-        self.lstm = LSTM(input_size, output_size, vocab_size, learning_rate)
+        #self.lstm = LSTM(input_size, output_size, vocab_size, learning_rate)
 
 
 class LSTM:
