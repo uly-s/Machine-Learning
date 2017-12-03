@@ -1,19 +1,16 @@
 import sys
 
-import RNN
-
 import numpy
 
 def random():
     return numpy.random.randint(0, 2147483647, dtype= int)
 
-file = open('binaryints.txt', 'w')
 
 
-for i in range(0, 10):
-    x = random()
-    file.write('{0:010} {1}\n'.format(x, bin(x)[2:].zfill(32)))
+import LSTM
 
 
-file.close()
 
+retData, vocab, outputs, output_size, data = LSTM.getData(open("trumptweetssample.txt", 'r', encoding='utf8').read())
+
+RNN = LSTM.RNN(vocab, vocab, output_size, outputs, 0.01)
