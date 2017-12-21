@@ -2,15 +2,39 @@ import sys
 
 import numpy
 
-def random():
-    return numpy.random.randint(0, 2147483647, dtype= int)
-
-
+import time
 
 import LSTM
 
 
 
-retData, vocab, outputs, output_size, data = LSTM.getData(open("trumptweetssample.txt", 'r', encoding='utf8').read())
+file = open("trumptweets.txt", 'r', encoding='utf8').read()
 
-RNN = LSTM.RNN(vocab, vocab, output_size, outputs, 0.01)
+text = list(file)
+
+alphabet = list(set(text))
+
+n = (len(alphabet))
+d = 100
+
+encode = {ch:i for i,ch in enumerate(alphabet)}
+decode = {i:ch for i,ch in enumerate(alphabet)}
+
+inputs = [encode[ch] for ch in text]
+outputs = [inputs[i + 1] for i in range(len(inputs)-1)]
+
+
+RNN = LSTM.RNN(n, d)
+
+RNN.train(inputs, outputs, 50)
+
+
+
+
+
+
+
+
+
+
+

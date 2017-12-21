@@ -1,19 +1,25 @@
 # Import logistic function that doesn't explode outside a 64 bit float
 from scipy.special import expit as sigmoid
-
 from numpy import zeros
 from numpy import zeros_like
-from numpy.random import random
+from numpy.random import randn
 from numpy import tanh
 from numpy import exp
+from numpy import sum
 from numpy import dot
 from numpy import sqrt
-from numpy import clip
-from numpy import atleast_2d
+from numpy import log
+from numpy import atleast_2d as _2d
+from numpy import column_stack as stack
 from numpy import vstack
+from numpy import hstack
 from numpy import append
 from numpy import where
 from numpy import asarray
+from numpy import clip
+from numpy import argmax
+from numpy import concatenate as concat
+from numpy import copy
 
 # derivative of sigmoid function
 def dsigmoid(z):
@@ -23,145 +29,254 @@ def dsigmoid(z):
 def dtanh(z):
     return 1 - tanh(z) ** 2
 
+# probability function
+def softmax(z):
+    return exp(z) / sum(exp(z))
+
+# cross entropy loss
+def cross_ent(p, y):
+    return -log(p[y])
 
 
 # RNN class
 class RNN:
 
-    def __init__(self, input_size, output_size, vocab_size, expected_output, learning_rate):
+    def __init__(self, n, d):
+        """Pass input size (n) and number of memory cells (d)"""
+        self.n = n
+        self.d = d
+        self.z, z = n + d, n + d
 
-        # input array
-        self.x = zeros(input_size)
+        self.x = []
 
-        # input length
-        self.xdim = input_size
+        self.Cells = [Cell(n, d, self)]
 
-        # output array, expected next word
-        self.y = zeros(output_size)
+        self.Wi, self.Wf, self.Wo, self.Wc, self.Wy = randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(d, n) / sqrt(d / 2)
+        self.bi, self.bf, self.bo, self.bc, self.by = randn(d, 1), randn(d, 1), randn(d, 1), randn(d, 1), randn(n, 1)
+        self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
+        self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
 
-        # output size
-        self.ydim = output_size
+    def FeedForward(self, inputs, ht_, ct_):
 
-        # vocab size / recurrence length
-        self.vocab = vocab_size
+        n, d = self.n, self.d
+        Cells = self.Cells
 
-        # learning rate
-        self.LR = learning_rate
+        while len(Cells) < len(inputs):
+            Cells.append(Cell(n, d, self))
 
-        # weight matrix, vocab size times vocab size
-        self.W = random((output_size, output_size))
 
-        # gradient matrix
-        self.G = zeros_like(self.W)
+        for i in range(len(Cells)):
+            ht_, ct_ = Cells[i].feedforward(inputs[i], ht_, ct_)
 
-        # array of inputs, vocab size times input length
-        self.inputs = zeros((vocab_size + 1, input_size))
+        return ht_, ct_
 
-        # array of cell states, vocab size times output length
-        self.cells = zeros((vocab_size + 1, output_size))
 
-        # array of outputs, vocab size times output size
-        self.outputs = zeros((vocab_size + 1, output_size))
 
-        # array of hidden states, vocab size times output size
-        self.states = zeros((vocab_size + 1, output_size))
+    def BPTT(self, outputs, ht1, ct1):
 
-        # input gate
-        self.i = zeros((vocab_size + 1, output_size))
+        n, d, z = self.n, self.d, self.n + self.d
+        Cells = self.Cells
 
-        # forget gate
-        self.f = zeros((vocab_size + 1, output_size))
+        loss = 0
 
-        # output gate
-        self.o = zeros((vocab_size + 1, output_size))
+        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
+
+        for i in reversed(range(len(outputs))):
+            ht1, ct1 = Cells[i].backpropagate(outputs[i], ht1, ct1)
+            loss += 0.1 * cross_ent(Cells[i].p, outputs[i])
+
+
+        return loss, ht1, ct1
+
+
+    def train(self, inputs, outputs, seq_length):
+
+        n, d, z = self.n, self.d, self.n + self.d
+
+        index = 0
+
+        LR = 0.1
+
+        ht_, ct_ = zeros((d, 1)), zeros((d, 1))
+        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
+
+
+
+        while index < len(outputs):
+            xlist = inputs[index:index + seq_length]
+            ylist = outputs[index:index + seq_length]
+            ht_, ct_ = self.FeedForward(xlist, ht_, ct_)
+            loss, ht1, ct1 = self.BPTT(ylist, ht1, ct1)
+            ht1, ct1 = zeros((d, 1)), zeros((d, 1))
+            print(loss)
+            self.update(LR)
+            index += seq_length
+
+
+    def update(self, LR):
+
+        n, d, z = self.n, self.d, self.n + self.d
+
+        self.Wi -= LR * self.dWi
+        self.Wf -= LR * self.dWf
+        self.Wo -= LR * self.dWo
+        self.Wc -= LR * self.dWc
+
+        #print(self.Wy.shape)
+        #print(self.dWy.shape)
+
+        self.Wy -= LR * self.dWy
+
+        self.bi -= LR * self.dbi
+        self.bf -= LR * self.dbf
+        self.bo -= LR * self.dbo
+        self.bc -= LR * self.dbc
+        self.by -= LR * self.dby
+
+        self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
+        self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
+
+
+
+
+class Cell:
+
+    def __init__(self, n, d, rnn):
+        """Pass the input size (n) and memory cell size (d), create hidden state of size d"""
+        self.n, self.d, self.h, self.z, z = n, d, zeros((d, 1)), n + d, n + d
+        self.rnn = rnn
+
+
+    def feedforward(self, x, c_, h_):
+        """Pass an input of size n, the previous hidden state, and the previous cell state"""
+        n, d = self.n, self.d
+        Wi, Wf, Wo, Wc, Wy = self.rnn.Wi, self.rnn.Wf, self.rnn.Wo, self.rnn.Wc, self.rnn.Wy
+        bi, bf, bo, bc, by = self.rnn.bi, self.rnn.bf, self.rnn.bo, self.rnn.bc, self.rnn.by
+
+        # one hot encoding
+        index = x
+        x = zeros((n, 1))
+        x[index] = 1
+
+        # input g is input x + previous hidden state
+        g = concat((x, h_))
+
+        # gate activations
+        it = sigmoid(dot(Wi.T, g) + bi)
+        ft = sigmoid(dot(Wf.T, g) + bf)
+        ot = sigmoid(dot(Wo.T, g) + bo)
+
+        # non linearity activation
+        ct = tanh(dot(Wc.T, g) + bc)
 
         # cell state
-        self.s = zeros((vocab_size + 1, output_size))
+        c = ft * c_ + it * ct
 
-        # expected output values
-        #self.expected = vstack((zeros(expected_output.shape[0]), expected_output.T))
+        # squashed hidden state
+        ht = ot * tanh(c)
 
-        #self.lstm = LSTM(input_size, output_size, vocab_size, learning_rate)
+        # get output state
+        yt = dot(Wy.T, ht) + by
 
+        # call softmax, get probability
+        p = softmax(yt)
 
-class LSTM:
+        self.c_, self.h_ = c_, h_
+        self.it, self.ft, self.ot, self.ct = it, ft, ot, ct
+        self.c, self.ht, self.yt, self.p, self.g = c, ht, yt, p, g
 
-    def __init__(self, input_size, output_size, vocab_size, learning_rate):
-
-        # input
-        self.x = zeros(input_size + output_size)
-
-        # input size
-        self.xdim = input_size + output_size
-
-        # output
-        self.y = zeros(output_size)
-
-        # output size
-        self.ydim = output_size
-
-        # recurrence rate / size of vocab
-        self.vocab = vocab_size
-
-        # learning rate
-        self.LR = learning_rate
-
-        # gate weight matrices
-        # input
-        self.i = random((output_size, input_size + output_size))
-
-        # forget
-        self.f = random((output_size, input_size + output_size))
-
-        # output
-        self.o = random((output_size, input_size + output_size))
-
-        # cell state
-        self.s = random((output_size, input_size + output_size))
-
-        # gradients
-        # nabla input
-        self.Ni = zeros_like(self.i)
-
-        # forget
-        self.Nf = zeros_like(self.f)
-
-        # output
-        self.No = zeros_like(self.o)
-
-        # cell state
-        self.Ns = zeros_like(self.s)
+        return ht, c
 
 
+    def backpropagate(self, y, ht1, ct1):
+
+        n, d = self.n, self.d
+        Wi, Wf, Wo, Wc, Wy = self.rnn.Wi, self.rnn.Wf, self.rnn.Wo, self.rnn.Wc, self.rnn.Wy
+        dWi, dWf, dWo, dWc, dWy = self.rnn.dWi, self.rnn.dWf, self.rnn.dWo, self.rnn.dWc, self.rnn.dWy
+        dbi, dbf, dbo, dbc, dby = self.rnn.dbi, self.rnn.dbf, self.rnn.dbo, self.rnn.dbc, self.rnn.dby
+        c_, h_ = self.c_, self.h_
+        it, ft, ot, ct = self.it, self.ft, self.ot, self.ct
+        c, ht, yt, p = self.c, self.ht, self.yt, self.p
+        g = self.g
+
+        dy = p.copy()
+        dy[y] -= 1
+
+        dh = dot(Wy, dy) + ht1
+
+        do = tanh(c) * dh
+        do = dsigmoid(ot) * do
+
+        dc = ot * dh * dtanh(c)
+        dc = dc + ct1
+
+        df = c_ * dc
+        df = dsigmoid(ft) * df
+
+        di = ct * dc
+        di = dsigmoid(it) * di
+
+        dct = it * dc
+        dct = dtanh(ct) * dct
+
+        dWf += dot(g, df.T)
+        dWi += dot(g, di.T)
+        dWo += dot(g, do.T)
+        dWc += dot(g, dc.T)
+        dWy += dot(ht, dy.T)
+
+        dbf += df
+        dbi += di
+        dbo += do
+        dbc += dc
+        dby += dy
+
+        dxi = dot(Wi, df)
+        dxf = dot(Wf, di)
+        dxo = dot(Wo, do)
+        dxc = dot(Wc, dct)
+
+        dx = dxf + dxi + dxo + dxc
+
+        dht1 = dx[n:]
+        dct1 = ft * dc
+
+        return dht1, dct1
 
 
-def getData(stream):
 
-    data = stream
 
-    text = list(data)
 
-    outputSize = len(text)
 
-    data = list(set(text))
 
-    uniqueWords, dataSize = len(data), len(data)
 
-    returnData = zeros((uniqueWords, dataSize))
 
-    for i in range(0, dataSize):
-        returnData[i][i] = 1
 
-    returnData = append(returnData, atleast_2d(data), axis=0)
 
-    output = zeros((uniqueWords, outputSize))
 
-    for i in range(0, outputSize):
-        index = where(asarray(data) == text[i])
 
-        output[:, i] = returnData[0:-1, index[0]].astype(float).ravel()
 
-    return returnData, uniqueWords, output, outputSize, data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
