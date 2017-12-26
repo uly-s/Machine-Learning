@@ -1,25 +1,8 @@
 # Import logistic function that doesn't explode outside a 64 bit float
 from scipy.special import expit as sigmoid
-from numpy import zeros
-from numpy import zeros_like
+from numpy import zeros, zeros_like, tanh, exp, sum, dot, sqrt, log, argmax, concatenate as concat, copy
 from numpy.random import randn
-from numpy import tanh
-from numpy import exp
-from numpy import sum
-from numpy import dot
-from numpy import sqrt
-from numpy import log
-from numpy import atleast_2d as _2d
-from numpy import column_stack as stack
-from numpy import vstack
-from numpy import hstack
-from numpy import append
-from numpy import where
-from numpy import asarray
-from numpy import clip
-from numpy import argmax
-from numpy import concatenate as concat
-from numpy import copy
+
 
 # derivative of sigmoid function
 def dsigmoid(z):
@@ -41,11 +24,13 @@ def cross_ent(p, y):
 # RNN class
 class RNN:
 
-    def __init__(self, n, d):
-        """Pass input size (n) and number of memory cells (d)"""
-        self.n = n
+    def __init__(self, n, d, RL, LR):
+        """Pass input size (n), number of memory cells (d), recurrence length (RL), and learning rate (LR)"""
+        self.n, self.d, self.z, z = n, d, n + d, n + d
         self.d = d
         self.z, z = n + d, n + d
+        self.RL = RL
+        self.LR = LR
 
         self.x = []
 
@@ -58,15 +43,13 @@ class RNN:
 
     def FeedForward(self, inputs, ht_, ct_):
 
-        n, d = self.n, self.d
-        Cells = self.Cells
+        n, d, rl, Cells = self.n, self.d, self.RL, self.Cells
 
-        while len(Cells) < len(inputs):
+        while len(Cells) < rl:
             Cells.append(Cell(n, d, self))
 
-
-        for i in range(len(Cells)):
-            ht_, ct_ = Cells[i].feedforward(inputs[i], ht_, ct_)
+        for cell, x in zip(Cells, range(len(inputs))):
+            ht_, ct_ = cell.feedforward(x, ht_, ct_)
 
         return ht_, ct_
 
@@ -74,44 +57,38 @@ class RNN:
 
     def BPTT(self, outputs, ht1, ct1):
 
-        n, d, z = self.n, self.d, self.n + self.d
+        n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
         Cells = self.Cells
 
-        loss = 0
+        avg_loss = 0
 
-        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
+        for i in reversed(range(rl)):
+            loss, ht1, ct1 = Cells[i].backpropagate(outputs[i], ht1, ct1)
+            avg_loss += loss
 
-        for i in reversed(range(len(outputs))):
-            ht1, ct1 = Cells[i].backpropagate(outputs[i], ht1, ct1)
-            loss += 0.1 * cross_ent(Cells[i].p, outputs[i])
+        avg_loss /= rl
+
+        return avg_loss, ht1, ct1
 
 
-        return loss, ht1, ct1
+    def train(self, inputs, outputs):
 
-
-    def train(self, inputs, outputs, seq_length):
-
-        n, d, z = self.n, self.d, self.n + self.d
-
+        n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
         index = 0
-
         LR = 0.1
+        loss = 0
 
         ht_, ct_ = zeros((d, 1)), zeros((d, 1))
         ht1, ct1 = zeros((d, 1)), zeros((d, 1))
 
-
-
         while index < len(outputs):
-            xlist = inputs[index:index + seq_length]
-            ylist = outputs[index:index + seq_length]
+            xlist = inputs[index:index + rl]
+            ylist = outputs[index:index + rl]
             ht_, ct_ = self.FeedForward(xlist, ht_, ct_)
             loss, ht1, ct1 = self.BPTT(ylist, ht1, ct1)
-            ht1, ct1 = zeros((d, 1)), zeros((d, 1))
-            print(loss)
+            #print(loss)
             self.update(LR)
-            index += seq_length
-
+            index += rl
 
     def update(self, LR):
 
@@ -121,12 +98,7 @@ class RNN:
         self.Wf -= LR * self.dWf
         self.Wo -= LR * self.dWo
         self.Wc -= LR * self.dWc
-
-        #print(self.Wy.shape)
-        #print(self.dWy.shape)
-
         self.Wy -= LR * self.dWy
-
         self.bi -= LR * self.dbi
         self.bf -= LR * self.dbf
         self.bo -= LR * self.dbo
@@ -136,50 +108,34 @@ class RNN:
         self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
         self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
 
-
-
-
 class Cell:
 
     def __init__(self, n, d, rnn):
-        """Pass the input size (n) and memory cell size (d), create hidden state of size d"""
+        """Pass the input size (n) and memory cell size (d), create hidden state of size d, pass rnn (self)"""
         self.n, self.d, self.h, self.z, z = n, d, zeros((d, 1)), n + d, n + d
         self.rnn = rnn
 
 
     def feedforward(self, x, c_, h_):
-        """Pass an input of size n, the previous hidden state, and the previous cell state"""
+        """Pass an input of size n, the previous hidden state(ht), and the previous cell state(c)"""
         n, d = self.n, self.d
         Wi, Wf, Wo, Wc, Wy = self.rnn.Wi, self.rnn.Wf, self.rnn.Wo, self.rnn.Wc, self.rnn.Wy
         bi, bf, bo, bc, by = self.rnn.bi, self.rnn.bf, self.rnn.bo, self.rnn.bc, self.rnn.by
 
-        # one hot encoding
-        index = x
+        index = x       # one hot encoding
         x = zeros((n, 1))
         x[index] = 1
+        g = concat((x, h_))         # input g is input x + previous hidden state
 
-        # input g is input x + previous hidden state
-        g = concat((x, h_))
-
-        # gate activations
-        it = sigmoid(dot(Wi.T, g) + bi)
+        it = sigmoid(dot(Wi.T, g) + bi)     # gate activations
         ft = sigmoid(dot(Wf.T, g) + bf)
         ot = sigmoid(dot(Wo.T, g) + bo)
+        ct = tanh(dot(Wc.T, g) + bc)        # non linearity activation
+        c = ft * c_ + it * ct       # cell state
 
-        # non linearity activation
-        ct = tanh(dot(Wc.T, g) + bc)
-
-        # cell state
-        c = ft * c_ + it * ct
-
-        # squashed hidden state
-        ht = ot * tanh(c)
-
-        # get output state
-        yt = dot(Wy.T, ht) + by
-
-        # call softmax, get probability
-        p = softmax(yt)
+        ht = ot * tanh(c)       # squashed hidden state
+        yt = dot(Wy.T, ht) + by     # output state
+        p = softmax(yt)     # call softmax, get probability
 
         self.c_, self.h_ = c_, h_
         self.it, self.ft, self.ot, self.ct = it, ft, ot, ct
@@ -199,8 +155,10 @@ class Cell:
         c, ht, yt, p = self.c, self.ht, self.yt, self.p
         g = self.g
 
-        dy = p.copy()
+        dy = copy(p)
         dy[y] -= 1
+
+        loss = cross_ent(p, y)
 
         dh = dot(Wy, dy) + ht1
 
@@ -231,8 +189,8 @@ class Cell:
         dbc += dc
         dby += dy
 
-        dxi = dot(Wi, df)
-        dxf = dot(Wf, di)
+        dxi = dot(Wi, di)
+        dxf = dot(Wf, df)
         dxo = dot(Wo, do)
         dxc = dot(Wc, dct)
 
@@ -241,11 +199,26 @@ class Cell:
         dht1 = dx[n:]
         dct1 = ft * dc
 
-        return dht1, dct1
+        return loss, dht1, dct1
 
 
 
+def valid(x):
 
+    try:
+        float(x)
+        return True
+
+    except ValueError:
+        return False
+
+def valid_array(xarray):
+
+    for i in range(len(xarray)):
+
+        value = valid(xarray[i])
+
+    return value
 
 
 

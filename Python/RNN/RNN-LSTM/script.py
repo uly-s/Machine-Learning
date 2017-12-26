@@ -24,9 +24,11 @@ inputs = [encode[ch] for ch in text]
 outputs = [inputs[i + 1] for i in range(len(inputs)-1)]
 
 
-RNN = LSTM.RNN(n, d)
 
-RNN.train(inputs, outputs, 50)
+
+RNN = LSTM.RNN(n, d, 100, 0.1)
+
+RNN.train(inputs, outputs)
 
 
 
