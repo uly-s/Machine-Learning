@@ -1,6 +1,6 @@
 # Import logistic function that doesn't explode outside a 64 bit float
 from scipy.special import expit as sigmoid
-from numpy import zeros, zeros_like, tanh, exp, sum, dot, sqrt, log, argmax, concatenate as concat, copy
+from numpy import zeros, zeros_like, tanh, exp, sum, dot, sqrt, log, argmax, concatenate as concat, copy, clip
 from numpy.random import randn
 
 
@@ -32,6 +32,8 @@ class RNN:
         self.RL = RL
         self.LR = LR
 
+        self.count = 0
+
         self.x = []
 
         self.Cells = [Cell(n, d, self)]
@@ -55,20 +57,24 @@ class RNN:
 
 
 
-    def BPTT(self, outputs, ht1, ct1):
+    def BPTT(self, outputs):
 
         n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
         Cells = self.Cells
 
+        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
+
         avg_loss = 0
 
         for i in reversed(range(rl)):
+            ht1 = Cells[i-1].ht
+            ct1 = Cells[i-1].c
             loss, ht1, ct1 = Cells[i].backpropagate(outputs[i], ht1, ct1)
             avg_loss += loss
 
         avg_loss /= rl
 
-        return avg_loss, ht1, ct1
+        return avg_loss
 
 
     def train(self, inputs, outputs):
@@ -79,16 +85,15 @@ class RNN:
         loss = 0
 
         ht_, ct_ = zeros((d, 1)), zeros((d, 1))
-        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
 
         while index < len(outputs):
             xlist = inputs[index:index + rl]
             ylist = outputs[index:index + rl]
             ht_, ct_ = self.FeedForward(xlist, ht_, ct_)
-            loss, ht1, ct1 = self.BPTT(ylist, ht1, ct1)
-            #print(loss)
+            loss = self.BPTT(ylist)
+            print(loss)
             self.update(LR)
-            index += rl
+            index += 1
 
     def update(self, LR):
 
@@ -161,12 +166,14 @@ class Cell:
         loss = cross_ent(p, y)
 
         dh = dot(Wy, dy) + ht1
+        dh = clip(dh, -6, 6)
 
         do = tanh(c) * dh
         do = dsigmoid(ot) * do
 
         dc = ot * dh * dtanh(c)
         dc = dc + ct1
+        dc = clip(dc, -6, 6)
 
         df = c_ * dc
         df = dsigmoid(ft) * df
@@ -203,22 +210,7 @@ class Cell:
 
 
 
-def valid(x):
 
-    try:
-        float(x)
-        return True
-
-    except ValueError:
-        return False
-
-def valid_array(xarray):
-
-    for i in range(len(xarray)):
-
-        value = valid(xarray[i])
-
-    return value
 
 
 
