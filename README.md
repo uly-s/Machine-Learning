@@ -9,6 +9,15 @@ doing it with the compartmentalization of OOP will be that much easier, what I d
 
 # Python
 
+Feed Forward Neural Net
+  Variable width and depth feed forward neural network outputting binary with sigmoid function and SGD
+    
+RNN
+  
+  Vanilla RNN: Char level vanilla RNN, takes in text files.
+  
+  LSTM: Unfinished from scratch LSTM
+
 Genetic Algorithm in progress
   
   Lesson0: Password guessing with simple mutation, pre extraction of genetic engine
