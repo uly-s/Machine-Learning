@@ -36,7 +36,7 @@ class RNN:
 
         self.x = []
 
-        self.Cells = [Cell(n, d, self)]
+        self.Cells = [Cell(n, d, self) for cell in range(RL)]
 
         self.Wi, self.Wf, self.Wo, self.Wc, self.Wy = randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(d, n) / sqrt(d / 2)
         self.bi, self.bf, self.bo, self.bc, self.by = randn(d, 1), randn(d, 1), randn(d, 1), randn(d, 1), randn(n, 1)
@@ -47,9 +47,6 @@ class RNN:
 
         n, d, rl, Cells = self.n, self.d, self.RL, self.Cells
 
-        while len(Cells) < rl:
-            Cells.append(Cell(n, d, self))
-
         for cell, x in zip(Cells, range(len(inputs))):
             ht_, ct_ = cell.feedforward(x, ht_, ct_)
 
@@ -57,12 +54,10 @@ class RNN:
 
 
 
-    def BPTT(self, outputs):
+    def BPTT(self, outputs, ht1, ct1):
 
         n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
         Cells = self.Cells
-
-        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
 
         avg_loss = 0
 
@@ -74,26 +69,102 @@ class RNN:
 
         avg_loss /= rl
 
-        return avg_loss
-
+        return avg_loss, ht1, ct1
 
     def train(self, inputs, outputs):
 
         n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
         index = 0
-        LR = 0.1
-        loss = 0
+
+        a = 0.001
+        b1 = 0.9
+        b2 = 0.999999
+        e = 1e-8
+
+        converged = False
+        t = 0
+
+        mWi, mWf, mWo, mWc, mWy = zeros_like((self.Wi)), zeros_like((self.Wf)), zeros_like((self.Wo)), zeros_like((self.Wc)), zeros_like((self.Wy))
+        mbi, mbf, mbo, mbc, mby = zeros_like((self.bi)), zeros_like((self.bf)), zeros_like((self.bo)), zeros_like((self.bc)), zeros_like((self.by))
+
+        vWi, vWf, vWo, vWc, vWy = zeros_like((self.Wi)), zeros_like((self.Wf)), zeros_like((self.Wo)), zeros_like((self.Wc)), zeros_like((self.Wy))
+        vbi, vbf, vbo, vbc, vby = zeros_like((self.bi)), zeros_like((self.bf)), zeros_like((self.bo)), zeros_like((self.bc)), zeros_like((self.by))
 
         ht_, ct_ = zeros((d, 1)), zeros((d, 1))
+        ht1, ct1 = zeros((d, 1)), zeros((d, 1))
 
-        while index < len(outputs):
+        while not converged:
+
+            t += 1
             xlist = inputs[index:index + rl]
             ylist = outputs[index:index + rl]
             ht_, ct_ = self.FeedForward(xlist, ht_, ct_)
-            loss = self.BPTT(ylist)
+            loss, ht1, ct1 = self.BPTT(ylist, ht1, ct1)
             print(loss)
-            self.update(LR)
-            index += 1
+
+            dWi, dWf, dWo, dWc, dWy = self.dWi, self.dWf, self.dWo, self.dWc, self.dWy
+            dbi, dbf, dbo, dbc, dby = self.dbi, self.dbf, self.dbo, self.dbc, self.dby
+
+            mWi = b1 * mWi + (1 - b1) * dWi
+            mWf = b1 * mWf + (1 - b1) * dWf
+            mWo = b1 * mWo + (1 - b1) * dWo
+            mWc = b1 * mWc + (1 - b1) * dWc
+            mWy = b1 * mWy + (1 - b1) * dWy
+            mbi = b1 * mbi + (1 - b1) * dbi
+            mbf = b1 * mbf + (1 - b1) * dbf
+            mbo = b1 * mbo + (1 - b1) * dbo
+            mbc = b1 * mbc + (1 - b1) * dbc
+            mby = b1 * mby + (1 - b1) * dby
+
+            vWi = b2 * vWi + (1 - b2) * dWi**2
+            vWf = b2 * vWf + (1 - b2) * dWf**2
+            vWo = b2 * vWo + (1 - b2) * dWo**2
+            vWc = b2 * vWc + (1 - b2) * dWc**2
+            vWy = b2 * vWy + (1 - b2) * dWy**2
+            vbi = b2 * vbi + (1 - b2) * dbi**2
+            vbf = b2 * vbf + (1 - b2) * dbf**2
+            vbo = b2 * vbo + (1 - b2) * dbo**2
+            vbc = b2 * vbc + (1 - b2) * dbc**2
+            vby = b2 * vby + (1 - b2) * dby**2
+
+            mWi_ = mWi / (1 - b1**t)
+            mWf_ = mWf / (1 - b1**t)
+            mWo_ = mWo / (1 - b1**t)
+            mWc_ = mWc / (1 - b1**t)
+            mWy_ = mWy / (1 - b1**t)
+            mbi_ = mbi / (1 - b1**t)
+            mbf_ = mbf / (1 - b1**t)
+            mbo_ = mbo / (1 - b1**t)
+            mbc_ = mbc / (1 - b1**t)
+            mby_ = mby / (1 - b1**t)
+
+            vWi_ = vWi / (1 - b2**t)
+            vWf_ = vWf / (1 - b2**t)
+            vWo_ = vWo / (1 - b2**t)
+            vWc_ = vWc / (1 - b2**t)
+            vWy_ = vWy / (1 - b2**t)
+            vbi_ = vbi / (1 - b2**t)
+            vbf_ = vbf / (1 - b2**t)
+            vbo_ = vbo / (1 - b2**t)
+            vbc_ = vbc / (1 - b2**t)
+            vby_ = vby / (1 - b2**t)
+
+            self.Wi = self.Wi - a * mWi_ / (sqrt(vWi_) + e)
+            self.Wf = self.Wf - a * mWf_ / (sqrt(vWf_) + e)
+            self.Wo = self.Wo - a * mWo_ / (sqrt(vWo_) + e)
+            self.Wc = self.Wc - a * mWc_ / (sqrt(vWc_) + e)
+            self.Wy = self.Wy - a * mWy_ / (sqrt(vWy_) + e)
+            self.bi = self.bi - a * mbi_ / (sqrt(vbi_) + e)
+            self.bf = self.bf - a * mbf_ / (sqrt(vbf_) + e)
+            self.bo = self.bo - a * mbo_ / (sqrt(vbo_) + e)
+            self.bc = self.bc - a * mbc_ / (sqrt(vbc_) + e)
+            self.by = self.by - a * mby_ / (sqrt(vby_) + e)
+
+            self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
+            self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
+
+            index += rl
+            if index >= len(outputs): index = 0
 
     def update(self, LR):
 
@@ -112,6 +183,10 @@ class RNN:
 
         self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
         self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
+
+
+
+
 
 class Cell:
 
@@ -207,6 +282,7 @@ class Cell:
         dct1 = ft * dc
 
         return loss, dht1, dct1
+
 
 
 
