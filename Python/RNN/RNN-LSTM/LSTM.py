@@ -1,43 +1,36 @@
 # Import logistic function that doesn't explode outside a 64 bit float
 from scipy.special import expit as sigmoid
 from numpy import zeros, zeros_like, tanh, exp, sum, dot, sqrt, log, argmax, concatenate as concat, copy, clip
-from numpy.random import randn
+from numpy.random import randn, randint
 
+def dsigmoid(z): return sigmoid(z) * (1 - sigmoid(z)) # derivative of sigmoid function
+def dtanh(z): return 1 - tanh(z) ** 2 # derivative of hyperbolic tangent
+def softmax(z): return exp(z) / sum(exp(z)) # probability function
+def cross_ent(p, y): return -log(p[y]) # cross entropy loss
 
-# derivative of sigmoid function
-def dsigmoid(z):
-    return sigmoid(z) * (1 - sigmoid(z))
+def preprocess(file_name):
+    """pass the name of the text file, returns size of the alphabet, a list of integer inputs, and one of outputs"""
 
-# derivative of hyperbolic tangent
-def dtanh(z):
-    return 1 - tanh(z) ** 2
+    file = open(''.join(file_name), 'r', encoding='utf-8').read()
+    text = list(file)
+    alphabet = list(set(text))
+    n = (len(alphabet))
 
-# probability function
-def softmax(z):
-    return exp(z) / sum(exp(z))
+    encode = {ch: i for i, ch in enumerate(alphabet)}
+    decode = {i: ch for i, ch in enumerate(alphabet)}
 
-# cross entropy loss
-def cross_ent(p, y):
-    return -log(p[y])
+    inputs = [encode[ch] for ch in text]
+    outputs = [inputs[i + 1] for i in range(len(inputs) - 1)]
 
+    return n, inputs, outputs
 
 # RNN class
 class RNN:
 
-    def __init__(self, n, d, RL, LR):
+    def __init__(self, n, d, RL):
         """Pass input size (n), number of memory cells (d), recurrence length (RL), and learning rate (LR)"""
-        self.n, self.d, self.z, z = n, d, n + d, n + d
-        self.d = d
-        self.z, z = n + d, n + d
-        self.RL = RL
-        self.LR = LR
-
-        self.count = 0
-
-        self.x = []
-
+        self.n, self.d, self.z, z, self.RL = n, d, n + d, n + d, RL
         self.Cells = [Cell(n, d, self) for cell in range(RL)]
-
         self.Wi, self.Wf, self.Wo, self.Wc, self.Wy = randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(d, n) / sqrt(d / 2)
         self.bi, self.bf, self.bo, self.bc, self.by = randn(d, 1), randn(d, 1), randn(d, 1), randn(d, 1), randn(n, 1)
         self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
@@ -51,8 +44,6 @@ class RNN:
             ht_, ct_ = cell.feedforward(x, ht_, ct_)
 
         return ht_, ct_
-
-
 
     def BPTT(self, outputs, ht1, ct1):
 
@@ -74,15 +65,8 @@ class RNN:
     def train(self, inputs, outputs):
 
         n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
-        index = 0
-
-        a = 0.001
-        b1 = 0.9
-        b2 = 0.999999
-        e = 1e-8
-
-        converged = False
-        t = 0
+        index, t, converged = 0, 0, False
+        a, b1, b2, e = 0.001, 0.9, 0.999, 1e-8
 
         mWi, mWf, mWo, mWc, mWy = zeros_like((self.Wi)), zeros_like((self.Wf)), zeros_like((self.Wo)), zeros_like((self.Wc)), zeros_like((self.Wy))
         mbi, mbf, mbo, mbc, mby = zeros_like((self.bi)), zeros_like((self.bf)), zeros_like((self.bo)), zeros_like((self.bc)), zeros_like((self.by))
@@ -166,35 +150,12 @@ class RNN:
             index += rl
             if index >= len(outputs): index = 0
 
-    def update(self, LR):
-
-        n, d, z = self.n, self.d, self.n + self.d
-
-        self.Wi -= LR * self.dWi
-        self.Wf -= LR * self.dWf
-        self.Wo -= LR * self.dWo
-        self.Wc -= LR * self.dWc
-        self.Wy -= LR * self.dWy
-        self.bi -= LR * self.dbi
-        self.bf -= LR * self.dbf
-        self.bo -= LR * self.dbo
-        self.bc -= LR * self.dbc
-        self.by -= LR * self.dby
-
-        self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
-        self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
-
-
-
-
-
 class Cell:
 
     def __init__(self, n, d, rnn):
         """Pass the input size (n) and memory cell size (d), create hidden state of size d, pass rnn (self)"""
-        self.n, self.d, self.h, self.z, z = n, d, zeros((d, 1)), n + d, n + d
+        self.n, self.d, self.z = n, d, n + d
         self.rnn = rnn
-
 
     def feedforward(self, x, c_, h_):
         """Pass an input of size n, the previous hidden state(ht), and the previous cell state(c)"""
@@ -223,7 +184,6 @@ class Cell:
 
         return ht, c
 
-
     def backpropagate(self, y, ht1, ct1):
 
         n, d = self.n, self.d
@@ -232,32 +192,18 @@ class Cell:
         dbi, dbf, dbo, dbc, dby = self.rnn.dbi, self.rnn.dbf, self.rnn.dbo, self.rnn.dbc, self.rnn.dby
         c_, h_ = self.c_, self.h_
         it, ft, ot, ct = self.it, self.ft, self.ot, self.ct
-        c, ht, yt, p = self.c, self.ht, self.yt, self.p
-        g = self.g
-
-        dy = copy(p)
-        dy[y] -= 1
+        c, ht, yt, p, g = self.c, self.ht, self.yt, self.p, self.g
 
         loss = cross_ent(p, y)
 
-        dh = dot(Wy, dy) + ht1
-        dh = clip(dh, -6, 6)
-
-        do = tanh(c) * dh
-        do = dsigmoid(ot) * do
-
-        dc = ot * dh * dtanh(c)
-        dc = dc + ct1
-        dc = clip(dc, -6, 6)
-
-        df = c_ * dc
-        df = dsigmoid(ft) * df
-
-        di = ct * dc
-        di = dsigmoid(it) * di
-
-        dct = it * dc
-        dct = dtanh(ct) * dct
+        dy = copy(p)
+        dy[y] -= 1
+        dh = clip(dot(Wy, dy) + ht1, -6, 6)
+        do = tanh(c) * dh * dsigmoid(ot)
+        dc = clip((ot * dh * dtanh(c)) + ct1, -6,  6)
+        df = c_ * dc * dsigmoid(ft)
+        di = ct * dc * dsigmoid(it)
+        dct = it * dc * dtanh(ct)
 
         dWf += dot(g, df.T)
         dWi += dot(g, di.T)
@@ -271,11 +217,7 @@ class Cell:
         dbc += dc
         dby += dy
 
-        dxi = dot(Wi, di)
-        dxf = dot(Wf, df)
-        dxo = dot(Wo, do)
-        dxc = dot(Wc, dct)
-
+        dxi, dxf, dxo, dxc = dot(Wi, di), dot(Wf, df), dot(Wo, do), dot(Wc, dct)
         dx = dxf + dxi + dxo + dxc
 
         dht1 = dx[n:]
