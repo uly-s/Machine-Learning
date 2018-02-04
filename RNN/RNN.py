@@ -158,7 +158,7 @@ class RNN:
         sequences you want to work, and the number of sequences
         to train over """
 
-    # get a list of cars
+    # get a list of chars
     chars = list(set(file))
     # get size of the data
     data_size = len(file)

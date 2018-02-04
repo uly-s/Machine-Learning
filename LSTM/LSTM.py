@@ -1,7 +1,7 @@
 # Import logistic function that doesn't explode outside a 64 bit float
 from scipy.special import expit as sigmoid
-from numpy import zeros, zeros_like, tanh, exp, sum, dot, sqrt, log, argmax, concatenate as concat, copy, clip
-from numpy.random import randn, randint
+from numpy import zeros, zeros_like, tanh, exp, sum, dot, sqrt, log, argmax, concatenate as concat, copy, clip, ravel
+from numpy.random import randn, choice
 
 def dsigmoid(z): return sigmoid(z) * (1 - sigmoid(z)) # derivative of sigmoid function
 def dtanh(z): return 1 - tanh(z) ** 2 # derivative of hyperbolic tangent
@@ -9,7 +9,8 @@ def softmax(z): return exp(z) / sum(exp(z)) # probability function
 def cross_ent(p, y): return -log(p[y]) # cross entropy loss
 
 def preprocess(file_name):
-    """pass the name of the text file, returns size of the alphabet, a list of integer inputs, and one of outputs"""
+    """pass the name of the text file, returns size of the alphabet, a list of integer inputs, and one of outputs.
+       Also returns dictionaries for encoding and decoding chars"""
 
     file = open(''.join(file_name), 'r', encoding='utf-8').read()
     text = list(file)
@@ -22,18 +23,19 @@ def preprocess(file_name):
     inputs = [encode[ch] for ch in text]
     outputs = [inputs[i + 1] for i in range(len(inputs) - 1)]
 
-    return n, inputs, outputs
+    return n, inputs, outputs, encode, decode
 
 # RNN class
 class RNN:
 
-    def __init__(self, n, d, RL):
-        """Pass input size (n), number of memory cells (d), recurrence length (RL), and learning rate (LR)"""
+    def __init__(self, n, d, RL, encode, decode):
+        """Pass input size (n), number of memory cells (d), recurrence length (RL), and ecode/decode from preprocess"""
         self.n, self.d, self.z, z, self.RL = n, d, n + d, n + d, RL
+        self.encode, self.decode = encode, decode
         self.Cells = [Cell(n, d, self) for cell in range(RL)]
         self.Wi, self.Wf, self.Wo, self.Wc, self.Wy = randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(z, d) / sqrt(z / 2), randn(d, n) / sqrt(d / 2)
-        self.bi, self.bf, self.bo, self.bc, self.by = randn(d, 1), randn(d, 1), randn(d, 1), randn(d, 1), randn(n, 1)
-        self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
+        self.bi, self.bf, self.bo, self.bc, self.by = zeros((d, 1)), zeros((d, 1)) + 0.1, zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
+        self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)) + 0.1, zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
         self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
 
     def FeedForward(self, inputs, ht_, ct_):
@@ -62,10 +64,10 @@ class RNN:
 
         return avg_loss, ht1, ct1
 
-    def train(self, inputs, outputs):
+    def train(self, inputs, outputs, batches):
 
         n, d, z, rl = self.n, self.d, self.n + self.d, self.RL
-        index, t, converged = 0, 0, False
+        L, index, t, sum, batch, best, ys = 0, 0, 0, 0, 0, 100000, len(outputs)
         a, b1, b2, e = 0.001, 0.9, 0.999, 1e-8
 
         mWi, mWf, mWo, mWc, mWy = zeros_like((self.Wi)), zeros_like((self.Wf)), zeros_like((self.Wo)), zeros_like((self.Wc)), zeros_like((self.Wy))
@@ -77,14 +79,19 @@ class RNN:
         ht_, ct_ = zeros((d, 1)), zeros((d, 1))
         ht1, ct1 = zeros((d, 1)), zeros((d, 1))
 
-        while not converged:
+        while t < batches:
 
             t += 1
-            xlist = inputs[index:index + rl]
-            ylist = outputs[index:index + rl]
+
+            xlist, ylist = inputs[index:index + rl], outputs[index:index + rl]
             ht_, ct_ = self.FeedForward(xlist, ht_, ct_)
             loss, ht1, ct1 = self.BPTT(ylist, ht1, ct1)
-            print(loss)
+
+            sum += loss
+            batch+=1
+            L = sum / batch
+
+            print('t: ' + str(t) + ', L: ' + str(L) + ', l: ' + str(loss))
 
             dWi, dWf, dWo, dWc, dWy = self.dWi, self.dWf, self.dWo, self.dWc, self.dWy
             dbi, dbf, dbo, dbc, dby = self.dbi, self.dbf, self.dbo, self.dbc, self.dby
@@ -147,8 +154,13 @@ class RNN:
             self.dWi, self.dWf, self.dWo, self.dWc, self.dWy = zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((z, d)), zeros((d, n))
             self.dbi, self.dbf, self.dbo, self.dbc, self.dby = zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((d, 1)), zeros((n, 1))
 
+            if t % 100 == 0: sum = 0; batch = 0;
+
             index += rl
-            if index >= len(outputs): index = 0
+
+            if index + rl >= ys: index = 0
+
+        print(best)
 
 class Cell:
 
@@ -224,44 +236,3 @@ class Cell:
         dct1 = ft * dc
 
         return loss, dht1, dct1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
