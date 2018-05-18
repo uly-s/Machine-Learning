@@ -1,6 +1,6 @@
 import RNN
 
-file = open("trumptweets.txt", 'r', encoding='utf8').read()
+file = open("warandpeace.txt", 'r', encoding='utf8').read()
 
 # get a list of chars
 chars = list(set(file))
@@ -9,6 +9,6 @@ data_size = len(file)
 # get size of vocab, should match vocab_size
 vocab_size = len(chars)
 
-net = RNN.RNN(100, vocab_size)
+net = RNN.RNN(128, vocab_size)
 
 net.bptt(file, 10, 320000)

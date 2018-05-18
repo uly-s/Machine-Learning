@@ -1,50 +1,52 @@
 import numpy as np
 
+
+
+
 class RNN:
   """ Character level Recurrent Neural Network trained by BPTT """
 
-  def __init__(self, size_hidden, size_vocab):
+  def __init__(self, h, n):
     """ pass the size of the hidden layers and the size of vocabulary """
-    self.size_hidden = size_hidden
-    self.size_vocab = size_vocab
+    self.h = h
+    self.n = n
 
-    self.Wxh = np.random.randn(size_hidden, size_vocab) * 0.01 # connection from every vocab word to every hidden node
-    self.Whh = np.random.randn(size_hidden, size_hidden) * 0.01 # connection from each hidden node to each hidden node
-    self.Why = np.random.randn(size_vocab, size_hidden) * 0.01 # connection from each hidden node to each vocab word
+    self.Wx = np.random.randn(h, n) * 0.01 # connection from every vocab word to every hidden node
+    self.Wh = np.random.randn(h, h) * 0.01 # connection from each hidden node to each hidden node
+    self.Wy = np.random.randn(n, h) * 0.01 # connection from each hidden node to each vocab word
 
-    self.bh = np.zeros((size_hidden, 1)) # biases shared between layers
-    self.by = np.zeros((size_vocab, 1)) # one output bias per vocab letter
+    self.bh = np.zeros((h, 1)) # biases shared between layers
+    self.by = np.zeros((n, 1)) # one output bias per vocab letter
 
     # no replacement for real LSTM but this is a vanilla implementation
-    self.mWxh = np.zeros((size_hidden, size_vocab)) 
-    self.mWhh = np.zeros((size_hidden, size_hidden)) 
-    self.mWhy = np.zeros((size_vocab, size_hidden))
-    self.mbh = np.zeros((size_hidden, 1)) # biases shared between layers
-    self.mby = np.zeros((size_vocab, 1))
+    self.mWx = np.zeros((h, n))
+    self.mWh = np.zeros((h, h))
+    self.mWy = np.zeros((n, h))
+    self.mbh = np.zeros((h, 1)) # biases shared between layers
+    self.mby = np.zeros((n, 1))
 
-    
 
-  def sample(self, hidden, seed, n):
+  def sample(self, hidden, seed, length):
     """ sample a sequence of integers
         from the model, hidden is the
         previous state, seed is the first
-        letter, n is the number to return """
+        letter, length is the number to return """
 
     # create a vocab size array, encode the seed index
-    x = np.zeros((self.size_vocab, 1))
+    x = np.zeros((self.n, 1))
     x[seed] = 1
 
     # create a holder for sequences
     sequence = []
 
     # for n inputs
-    for t in range(n):
+    for t in range(length):
 
       # hidden state
-      hidden = np.tanh(np.dot(self.Wxh, x) + np.dot(self.Whh, hidden) + self.bh)
+      hidden = np.tanh(np.dot(self.Wx, x) + np.dot(self.Wh, hidden) + self.bh)
 
       # output state
-      output = np.dot(self.Why, hidden) + self.by
+      output = np.dot(self.Wy, hidden) + self.by
 
       logit = np.exp(output)
 
@@ -52,10 +54,10 @@ class RNN:
       probability = logit / np.sum(logit)
 
       # random index
-      index = np.random.choice(range(self.size_vocab), p = probability.ravel())
+      index = np.random.choice(range(self.n), p = probability.ravel())
 
       # reset x
-      x = np.zeros((self.size_vocab, 1))
+      x = np.zeros((self.n, 1))
 
       # set index
       x[index] = 1
@@ -72,85 +74,85 @@ class RNN:
         state (loss, input, hidden, output weights, hidden and output bias, last state) """
 
     # state of input, hidden, output, and probabilities 
-    input_state, hidden_state, output_state, probabilities = {}, {}, {}, {}
+    xs, hs, ys, ps = {}, {}, {}, {}
 
     # loss
     loss = 0
 
     # set hidden state at the end to be the last hidden state
-    hidden_state[-1] = np.copy(previous)
+    hs[-1] = np.copy(previous)
 
     # FORWARD PASS
     for t in range(len(inputs)):
 
       # get input state
-      input_state[t] = np.zeros((self.size_vocab, 1))
+      xs[t] = np.zeros((self.n, 1))
 
       # set input state [t] to position t of inputs
-      input_state[t][inputs[t]] = 1 
+      xs[t][inputs[t]] = 1
 
       # hidden state
-      hidden_state[t] = np.tanh(np.dot(self.Wxh, input_state[t]) + np.dot(self.Whh, hidden_state[t-1]) + self.bh)
+      hs[t] = np.tanh(np.dot(self.Wx, xs[t]) + np.dot(self.Wh, hs[t-1]) + self.bh)
 
       # output state
-      output_state[t] = np.dot(self.Why, hidden_state[t]) + self.by
+      ys[t] = np.dot(self.Wy, hs[t]) + self.by
 
       # probabilities, softmax
-      probabilities[t] = np.exp(output_state[t]) / np.sum(np.exp(output_state[t]))
+      ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
 
       # cross entropy loss
-      loss += -np.log(probabilities[t][targets[t], 0])
+      loss += -np.log(ps[t][targets[t], 0])
 
     # holder for the gradient
-    dWxh = np.zeros((self.size_hidden, self.size_vocab)) 
-    dWhh = np.zeros((self.size_hidden, self.size_hidden)) 
-    dWhy = np.zeros((self.size_vocab, self.size_hidden))
-    dbh = np.zeros((self.size_hidden, 1)) 
-    dby = np.zeros((self.size_vocab, 1))
+    dWx = np.zeros((self.h, self.n))
+    dWh = np.zeros((self.h, self.h))
+    dWy = np.zeros((self.n, self.h))
+    dbh = np.zeros((self.h, 1))
+    dby = np.zeros((self.n, 1))
 
     # next hidden state
-    delta_next = np.zeros_like(hidden_state[0])
+    dn = np.zeros_like(hs[0])
 
     # BACKWARDS PASS
     for t in reversed(range(len(inputs))):
 
-      # get output probabilities
-      delta_output = np.copy(probabilities[t])
+      # get delta output probabilities
+      do = np.copy(ps[t])
 
       # backpropagate into the output nodes
-      delta_output[targets[t]] -= 1
+      do[targets[t]] -= 1
 
       # delta output weights += dot product of delta output and the hidden state transpose
-      dWhy += np.dot(delta_output[t], hidden_state[t].T)
+      dWy += np.dot(do[t], hs[t].T)
 
       # add delta output to delta bias output
-      dby += delta_output
+      dby += do
 
       # backpropagate into hidden, change in 
       # hidden = dot product of the output weights transposed and delta output
-      delta_hidden = np.dot(self.Why.T, delta_output) + delta_next
+      dh = np.dot(self.Wy.T, do) + dn
 
       # backpropagate through tnh nonlinearity
-      delta_hidden_raw = (1 - hidden_state[t] * hidden_state[t]) * delta_hidden
+      dh_ = (1 - hs[t] * hs[t]) * dh
 
       # update change in bias to raw
-      dbh += delta_hidden_raw
+      dbh += dh_
 
       # update to input weights is the dot product raw and the input state transposed
-      dWxh += np.dot(delta_hidden_raw, input_state[t].T)
+      dWx += np.dot(dh_, xs[t].T)
 
       # update to hidden weights is the dot product of raw of the last hidden state transposed
-      dWhh += np.dot(delta_hidden_raw, hidden_state[t - 1].T)
+      dWh += np.dot(dh_, hs[t - 1].T)
 
       # update change in next hidden state to the dot product of the hidden weights transposed and raw
-      delta_next = np.dot(self.Whh.T, delta_hidden_raw)
+      dn = np.dot(self.Wh.T, dh_)
 
     # Clip parameters to mitigate exploding gradient
-    for d in [dWxh, dWhh, dWhy, dbh, dby]:
+    for d in [dWx, dWh, dWy, dbh, dby]:
       np.clip(d, -5, 5, out = d)
 
     # return loss, gradient, and the last hidden state
-    return loss, dWxh, dWhh, dWhy, dbh, dby, hidden_state[len(inputs)-1]
+    return loss, dWx, dWh, dWy, dbh, dby, hs[len(inputs)-1]
     
 
   def bptt(self, file, sequence_length, sequences):
@@ -163,10 +165,10 @@ class RNN:
     # get size of the data
     data_size = len(file)
     # get size of vocab, should match vocab_size
-    vocab_size = len(chars)
+    n = len(chars)
 
     # check for correct parameters
-    if self.size_vocab != vocab_size:
+    if self.n != n:
       print("PARAMETER MISMATCH, INCORRECT NETWORK SIZE FOR INPUT SIZE")
     
     # encode the chars in the text file as dictionaries of integers and vice versa
@@ -177,14 +179,14 @@ class RNN:
     iteration = 0
     index = 0
     loss = 0
-    smooth_loss = -np.log(1.0/self.size_vocab) * sequence_length
+    smooth_loss = -np.log(1.0/self.n) * sequence_length
 
     # create objects for the change in weight and bias
-    dWxh = np.zeros((self.size_hidden, self.size_vocab)) 
-    dWhh = np.zeros((self.size_hidden, self.size_hidden)) 
-    dWhy = np.zeros((self.size_vocab, self.size_hidden))
-    dbh = np.zeros((self.size_hidden, 1)) 
-    dby = np.zeros((self.size_vocab, 1))
+    dWx = np.zeros((self.h, self.n))
+    dWh = np.zeros((self.h, self.h))
+    dWy = np.zeros((self.n, self.h))
+    dbh = np.zeros((self.h, 1))
+    dby = np.zeros((self.n, 1))
 
     # while we still have training to do
     while iteration < sequences:
@@ -194,7 +196,7 @@ class RNN:
       if index + sequence_length + 1 >= len(file) or iteration == 0:
 
         # previous hidden state
-        previous = np.zeros((self.size_hidden, 1))
+        previous = np.zeros((self.h, 1))
 
         # reset index
         index = 0
@@ -210,7 +212,7 @@ class RNN:
         print(text)
 
       # get the loss, gradient, and the next hidden state
-      loss, dWxh, dWhh, dWhy, dbh, dby, previous = self.loss(inputs, targets, previous)
+      loss, dWx, dWh, dWy, dbh, dby, previous = self.loss(inputs, targets, previous)
 
       # get smooth loss
       smooth_loss = smooth_loss * 0.999 + loss * 0.001
@@ -220,9 +222,9 @@ class RNN:
         print(smooth_loss)
 
       # update parameters and memory with delta 
-      for par, dpar, mem in zip([self.Wxh, self.Whh, self.Why, self.bh, self.by],
-                                 [dWxh, dWhh, dWhy, dbh, dby],
-                                 [self.mWxh, self.mWhh, self.mWhy, self.mbh, self.mby]):
+      for par, dpar, mem in zip([self.Wx, self.Wh, self.Wy, self.bh, self.by],
+                                 [dWx, dWh, dWy, dbh, dby],
+                                 [self.mWx, self.mWh, self.mWy, self.mbh, self.mby]):
 
         # update memory to square of parameter
         mem += dpar * dpar
