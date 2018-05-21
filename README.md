@@ -1,13 +1,3 @@
-# C++
-
-Shallow Neural Net
-
-Unfinished Deep Neural Net
-
-Unfinished varying implementations of a neural net differing on level of OOP, may finish later but if I can do it without OOP in c++ then
-doing it with the compartmentalization of OOP will be that much easier, what I do have at least for these files is the data structures, operators, skeletons etc, I just don't want to spend the time implementing them when I could work on something new I don't already know about. 
-
-# Python
 
 Feed Forward Neural Net
   Variable width and depth feed forward neural network outputting binary with sigmoid function and SGD
