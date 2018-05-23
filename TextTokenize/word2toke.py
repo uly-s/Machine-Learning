@@ -1,13 +1,17 @@
-import re
+import re, numpy
 
 def file2words(path, encoding="utf-8", reg="[\w]+|[^\s\w]"):
 
     file = open("".join(path), 'r', encoding=encoding)
     lines = []
+    max = 0
 
     for line in file:
         line = line.lower()
-        lines.append(re.findall(r"".join(reg), line))
+        entry = re.findall(r"".join(reg), line)
+        lines.append(entry)
+        if len(entry) > max:
+            max = len(entry)
 
     y = []
 
@@ -15,14 +19,14 @@ def file2words(path, encoding="utf-8", reg="[\w]+|[^\s\w]"):
         for word in line:
             y.append(word)
 
-    return y
+    return y, lines, max
 
 def words2vocab(x):
     y = list(set(x))
     y.sort()
     return y
 
-def list2freq(x, vocab):
+def words2freq(x, vocab):
     freq = {}
 
     for word in vocab:
@@ -33,16 +37,43 @@ def list2freq(x, vocab):
 
     return freq
 
+def word2int(vocab):
+    return dict((w, i) for i, w in enumerate(vocab))
 
-def pruneVocab(x, vocab, new_vocab=10000):
+def int2word(vocab):
+    return dict((i, w) for i, w in enumerate(vocab))
 
-    if new_vocab < 10000:
-        print("IF YOUR VOCAB IS SMALLER THAN 10K PRUNE IT YOURSELF")
-        return vocab
+def words2ints(x, w2int):
+    y = [w2int[word] for word in x]
+    return y
 
-    freq = list2freq(x, vocab)
+def ints2targets(x, RL):
+    index = 0
+    y = []
+    while index + RL < len(x):
+        y.append(x[index + RL])
+        index += RL
 
-    vals = []
+def list2mat(x, max):
+    n = len(x)
+    y = numpy.zeros((int(n/max)+1, max), dtype=int)
+    i, j, h = 0, 0, y.shape[1]
+
+    for xn in x:
+        y[i, j] = x[i * h + j]
+
+    return y
+
+def mat2targets(x):
+    y = numpy.zeros(x.shape[0])
+    for i in range(y.shape[0]):
+        y[i] = x[i, -1]
+
+    return y
+
+def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=True, f=0.00001):
+
+    vals, pruned, rare = [], [], []
 
     for val in freq.values():
         vals.append(val)
@@ -50,32 +81,57 @@ def pruneVocab(x, vocab, new_vocab=10000):
     vals.sort()
     vals.reverse()
 
-    vals = vals[:new_vocab]
-    cutoff = vals[-1]
+    if prune_freq:
+        total = 0
+        for key, val in zip(freq.keys(), freq.values()):
+            total += freq[key]
 
-    pruned = []
-    rare = []
+        min = int(total * f)
+
+    else:
+        vals = vals[:new_vocab]
+        min = vals[-1]
 
     for key, val in zip(freq.keys(), freq.values()):
-        if val >= cutoff + 1:
+        if val >= min:
             pruned.append(key)
-        elif val == cutoff:
+        elif val == min:
             rare.append(key)
 
-    index = 0
-
-    while len(pruned) < new_vocab:
-        pruned.append(rare[index])
-        index += 1
+    for word in rare:
+        if len(pruned) < new_vocab:
+            pruned.append(word)
+        else:
+            break
 
     return pruned
 
-#sample = file2list("ASOIAF.txt")
+def pruneText(x, w2int, vocab):
+    vocab.sort()
+    y = []
+    for word in x:
+        if word in w2int:
+            y.append(word)
 
-#vocab = list2vocab(sample)
+    return y
 
-#freq = list2freq(sample, vocab)
+def getSeed(text, RL):
+    index = numpy.random.randint(0, len(text)-2*RL)
+    return text[index:index+RL], text[index:index+2*RL]
 
-#pruneVocab(sample, vocab)
 
-#print(str(freq))
+def getSeeds(text, RL, num):
+    seeds = []
+    for i in range(num):
+        index = numpy.random.randint(0, len(text)- RL)
+        seed = text[index:index+RL]
+        seeds.append(seed)
+
+    return seeds
+
+def padSeqs(seqs):
+    return seqs
+
+def percentile(data, P):
+    i = int(round(P * len(data) + 0.5))
+    return data[i-1]
