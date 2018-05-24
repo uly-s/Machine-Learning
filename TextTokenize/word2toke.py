@@ -1,17 +1,16 @@
 import re, numpy
 
+
+
 def file2words(path, encoding="utf-8", reg="[\w]+|[^\s\w]"):
 
     file = open("".join(path), 'r', encoding=encoding)
     lines = []
-    max = 0
 
     for line in file:
         line = line.lower()
         entry = re.findall(r"".join(reg), line)
         lines.append(entry)
-        if len(entry) > max:
-            max = len(entry)
 
     y = []
 
@@ -19,7 +18,7 @@ def file2words(path, encoding="utf-8", reg="[\w]+|[^\s\w]"):
         for word in line:
             y.append(word)
 
-    return y, lines, max
+    return y
 
 def words2vocab(x):
     y = list(set(x))
@@ -47,21 +46,6 @@ def words2ints(x, w2int):
     y = [w2int[word] for word in x]
     return y
 
-def ints2targets(x, RL):
-    index = 0
-    y = []
-    while index + RL + 1 < len(x):
-        y.append(x[index + RL + 1])
-        index += RL
-
-    return y
-
-def targets2array(x):
-    y = numpy.array(x)
-    y = y.reshape((y.shape[0]))
-    return y
-
-
 def list2data(list, RL):
     n = len(list)
 
@@ -83,7 +67,7 @@ def list2data(list, RL):
 
     return x, y
 
-def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=True, f=0.00002):
+def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=False, f=0.00002):
 
     vals, pruned, rare = [], [], []
 
@@ -105,7 +89,7 @@ def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=True, f=0.00002):
         min = vals[-1]
 
     for key, val in zip(freq.keys(), freq.values()):
-        if val >= min:
+        if val > min:
             pruned.append(key)
         elif val == min:
             rare.append(key)
@@ -146,6 +130,4 @@ def getSeeds(text, RL, num):
 def padSeqs(seqs):
     return seqs
 
-def percentile(data, P):
-    i = int(round(P * len(data) + 0.5))
-    return data[i-1]
+
