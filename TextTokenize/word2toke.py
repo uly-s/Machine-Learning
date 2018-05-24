@@ -50,28 +50,40 @@ def words2ints(x, w2int):
 def ints2targets(x, RL):
     index = 0
     y = []
-    while index + RL < len(x):
-        y.append(x[index + RL])
+    while index + RL + 1 < len(x):
+        y.append(x[index + RL + 1])
         index += RL
 
-def list2mat(x, max):
-    n = len(x)
-    y = numpy.zeros((int(n/max)+1, max), dtype=int)
-    i, j, h = 0, 0, y.shape[1]
-
-    for xn in x:
-        y[i, j] = x[i * h + j]
-
     return y
 
-def mat2targets(x):
-    y = numpy.zeros(x.shape[0])
-    for i in range(y.shape[0]):
-        y[i] = x[i, -1]
-
+def targets2array(x):
+    y = numpy.array(x)
+    y = y.reshape((y.shape[0]))
     return y
 
-def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=True, f=0.00001):
+
+def list2data(list, RL):
+    n = len(list)
+
+    cols = int(n/RL)
+
+    x = numpy.zeros((cols, RL), dtype=int)
+    y = numpy.zeros(cols, dtype=int)
+
+    h = x.shape[0]
+    w = x.shape[1]
+
+    for j in range(h):
+        for i in range(w):
+            x[j, i] = list[i * cols + j]
+        y[j] = list[(RL-1) * cols + j]
+
+    for j in range(h-1):
+        y[j] = x[j+1, -1]
+
+    return x, y
+
+def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=True, f=0.00002):
 
     vals, pruned, rare = [], [], []
 
@@ -103,6 +115,8 @@ def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=True, f=0.00001):
             pruned.append(word)
         else:
             break
+
+    pruned.sort()
 
     return pruned
 
