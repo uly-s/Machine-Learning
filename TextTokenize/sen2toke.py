@@ -1,20 +1,49 @@
+import os
 import re
 import word2toke
+import PreEmbed
 
-def path2text(path, encoding='utf-8'):
-    text = ""
-    file = open("".join(path), 'r', encoding=encoding)
+def path2words(file, path="C:/Users/Grant/PycharmProjects/Machine-Learning/Random Encounter/", encoding='utf-8', reg="\w+|[^\w\s]"):
+    path = os.path.join(path, file)
+    file = open(path, 'r', encoding=encoding)
+    words = []
     for line in file:
         line = line.lower()
-        text = text + line
-    return text
+        entry = re.findall(r"".join(reg), line)
+        words.extend(entry)
 
-def text2words(text, reg="\w+|[^\w\s]"):
-    words = re.findall(r"".join(reg), text)
     return words
 
-def words2vocab(words):
-    return word2toke.words2vocab(words)
+def words2vocab(words, n=10000, prune=True, prune_rare=False, f=0.00002):
+    return word2toke.words2vocab(words, n, prune=prune, prune_rare=prune_rare, f=f)
+
+def words2sens(words):
+    seqs = []
+    index, start, end = 0, 0, 0
+
+    for i, word in enumerate(words):
+        end +=1
+        if word == "." or word == "?" or word == "!" and i < len(words) and words[i+1] != ".":
+            seq = words[start:end]
+            seqs.append(seq)
+            start = end
+
+    return seqs
+
+def uniqueSens(sens):
+    return list(set([" ".join(word for word in sen) for sen in sens]))
+
+
+def maxlen(seqs):
+    max = 0
+    for seq in seqs:
+        n = len(seq)
+        if n > max:
+            max = n
+
+    return max
+
+
 
 
 

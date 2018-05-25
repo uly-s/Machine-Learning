@@ -1,21 +1,27 @@
-import re, numpy
+import os, re, numpy
 
-def file2words(path, encoding="utf-8", reg="\w+|[^\w\s]"):
-    text = ""
-    file = open("".join(path), 'r', encoding=encoding)
+def file2words(file, path="C:/Users/Grant/PycharmProjects/Machine-Learning/Random Encounter/", encoding="utf-8", reg="\w+|[^\w\s]"):
+    path = os.path.join(path, file)
+    file = open(path, 'r', encoding=encoding)
+    lines = []
     for line in file:
-        text = text + line
-    text = text.lower()
-    words = re.findall(r"".join(reg), text)
+        line = line.lower()
+        entry = re.findall(r"".join(reg), line)
+        lines.extend(entry)
 
-    return words
+    return lines
 
 
 
-def words2vocab(x):
-    y = list(set(x))
-    y.sort()
-    return y
+def words2vocab(x, n=10000, prune=False, prune_rare=False, f=0.00002):
+    vocab = list(set(x))
+    vocab.sort()
+
+    if prune:
+        freq = words2freq(x, vocab)
+        vocab = pruneVocab(freq, vocab, n, prune_freq=prune_rare, f=f)
+
+    return vocab
 
 def words2freq(x, vocab):
     freq = {}
