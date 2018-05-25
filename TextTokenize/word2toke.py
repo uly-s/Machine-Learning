@@ -1,8 +1,6 @@
 import re, numpy
 
-
-
-def file2words(path, encoding="utf-8", reg="[\w]+|[^\s\w]"):
+def file2words(path, encoding="utf-8", reg="\w+|[^\w\s]"):
 
     file = open("".join(path), 'r', encoding=encoding)
     lines = []
@@ -66,6 +64,18 @@ def list2data(list, RL):
         y[j] = x[j+1, -1]
 
     return x, y
+
+def dataSamples(X, Y, num=1000):
+    sX = numpy.zeros((num, X.shape[1]), dtype=int)
+    sY = numpy.zeros(num, dtype=int)
+    for i in range(num):
+        index = numpy.random.randint(0, X.shape[0])
+        sample = X[index]
+        sX[i] = sample
+        sY[i] = Y[index]
+
+    return (sX, sY)
+
 
 def pruneVocab(freq, vocab, new_vocab=10000, prune_freq=False, f=0.00002):
 
