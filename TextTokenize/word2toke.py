@@ -21,6 +21,8 @@ def words2vocab(x, n=10000, prune=False, prune_rare=False, f=0.00002):
         freq = words2freq(x, vocab)
         vocab = pruneVocab(freq, vocab, n, prune_freq=prune_rare, f=f)
 
+    vocab.sort()
+
     return vocab
 
 def words2freq(x, vocab):

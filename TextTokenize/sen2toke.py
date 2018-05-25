@@ -17,20 +17,23 @@ def path2words(file, path="C:/Users/Grant/PycharmProjects/Machine-Learning/Rando
 def words2vocab(words, n=10000, prune=True, prune_rare=False, f=0.00002):
     return word2toke.words2vocab(words, n, prune=prune, prune_rare=prune_rare, f=f)
 
-def words2sens(words):
-    seqs = []
+def words2sens(words, unique=False):
+    sens = []
     index, start, end = 0, 0, 0
 
     for i, word in enumerate(words):
         end +=1
         if word == "." or word == "?" or word == "!" and i < len(words) and words[i+1] != ".":
-            seq = words[start:end]
-            seqs.append(seq)
+            sen = words[start:end]
+            sens.append(sen)
             start = end
 
-    return seqs
+    if unique:
+        sens = sens2unique(sens)
 
-def uniqueSens(sens):
+    return sens
+
+def sens2unique(sens):
     return list(set([" ".join(word for word in sen) for sen in sens]))
 
 
