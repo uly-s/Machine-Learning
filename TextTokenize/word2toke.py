@@ -1,22 +1,16 @@
 import re, numpy
 
 def file2words(path, encoding="utf-8", reg="\w+|[^\w\s]"):
-
+    text = ""
     file = open("".join(path), 'r', encoding=encoding)
-    lines = []
-
     for line in file:
-        line = line.lower()
-        entry = re.findall(r"".join(reg), line)
-        lines.append(entry)
+        text = text + line
+    text = text.lower()
+    words = re.findall(r"".join(reg), text)
 
-    y = []
+    return words
 
-    for line in lines:
-        for word in line:
-            y.append(word)
 
-    return y
 
 def words2vocab(x):
     y = list(set(x))
