@@ -1,20 +1,43 @@
+# Embedding
 
-Feed Forward Neural Net
-  Variable width and depth feed forward neural network outputting binary with sigmoid function and SGD
-    
-RNN
+  Functions for getting relevant GloVectors from wiki embedding and soon to be a numpy implementation of GloVec
   
-  Vanilla RNN: Char level vanilla RNN, takes in text files.
-  
-  LSTM: Unfinished from scratch LSTM
+# Encoder Decoder
 
-Genetic Algorithm in progress
+  Keras encoder/decoder lstm, unfinished
   
-  Lesson0: Password guessing with simple mutation, pre extraction of genetic engine
+# Genetic Algorithm
   
-  Lesson1: Password guessing with use of a genetic engine module, adition of a chromosome object and integration into engine
+  Have not covered recomibnation but have gone over some of the basis of optimization through mutation. 
+
+# LSTM 
+
+  Long short term memory in numpy 
+
+# Neural Net
+
+  Variable width and depth feed forward neural net in numpy optimized with SGD.
   
-  Lesson2: Conversion from using strings to list to generalize engine for other projects, objective of lesson is to maximize a binary list
+# RNN
+  
+  Recurrent neural net in numpy.
+  
+# Random Encounter
+
+  playing around with text generation
+  
+# Text Tokenize
+
+  Functions for rather quickly tokenizing and processing text for use in NLP. Word2toke and sen2toke is quite functional.
+  
+# Variational Auto Encoder
+
+  Recreating a keras implementation of a variational auto encoder, however the code from the guide does not work on my computer so I am troubleshooting. 
+
+  
+
+
+
 
 # Data
 
