@@ -1,5 +1,4 @@
 #from __future__ import print_function
-
 from keras.callbacks import LambdaCallback
 
 import numpy
@@ -17,8 +16,6 @@ x = numpy.zeros((len(data), 784))
 
 for i, entry in enumerate(data):
     x[i] = entry
-
-x.reshape((-1, 784))
 
 VAE = VarAutoEncoder.VariationalAutoEncoder(784, 128, 128)
 
