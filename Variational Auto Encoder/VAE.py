@@ -2,10 +2,14 @@ from keras import backend as K
 from keras.engine.topology import Layer
 from keras.models import Model, Sequential
 from keras.layers import Input, Multiply, Add, Dense, Lambda
+import numpy
 
-def NLL(y_true, y_pred):
-    LH = K.tf.distributions.Bernoulli(probs=y_pred)
-    return -K.sum(LH.log_prob(y_true), axis=-1)
+
+
+
+def nll(y_true, y_pred):
+    return K.sum(K.binary_crossentropy(y_true, y_pred), axis=-1)
+
 
 
 class KL(Layer):
@@ -18,6 +22,8 @@ class KL(Layer):
         self.add_loss(K.mean(batch), inputs=inputs)
 
         return inputs
+
+
 
 def VariationalAutoEncoder(input, intermediate, latent):
 
@@ -33,13 +39,13 @@ def VariationalAutoEncoder(input, intermediate, latent):
 
     log = Dense(latent)(h)
 
-    ### STANDARD DEVIATION
-
-    sigma = Lambda(lambda t: K.exp(0.5*t))(log)
-
     ### KL DIVERGENCE LAYER, TAKES MEAN AND LOG VARIANCE
 
     mu, log = KL()([mu, log])
+
+    ### STANDARD DEVIATION
+
+    sigma = Lambda(lambda t: K.exp(0.5*t))(log)
 
     ### EPSILON FOR GAUSSIAN NOISE TERM
 
@@ -47,11 +53,11 @@ def VariationalAutoEncoder(input, intermediate, latent):
 
     ### MULTIPLY STD DEV AND NOISE
 
-    z_eps = Multiply()([sigma, eps])
+    zeps = Multiply()([sigma, eps])
 
     ### OUTPUT  OF ENCODER, MEAN PLUS NOISY SIGMA
 
-    z = Add()([mu, z_eps])
+    z = Add()([mu, zeps])
 
     ### DECODER ###
 
@@ -61,7 +67,7 @@ def VariationalAutoEncoder(input, intermediate, latent):
     ### MODEL ###
 
     VAE = Model(inputs=[x, eps], outputs=decoder)
-    VAE.compile(optimizer='rmsprop', loss=NLL)
+    VAE.compile(optimizer='rmsprop', loss=nll)
 
 
     return VAE
