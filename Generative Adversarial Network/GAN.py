@@ -176,6 +176,8 @@ with tf.Session() as sess:
         #for batch in batches
         for batch in range(batches):
 
+            blG, blD = 0.0, 0.0
+
             # train discriminator for k batches
             for step in range(k):
 
@@ -195,7 +197,7 @@ with tf.Session() as sess:
 
                 # run ression
 
-                sess.run([minD, dloss], feed_dict={z:Gx, x:Dx1})
+                _, blD = sess.run([minD, dloss], feed_dict={z:Gx, x:Dx1})
 
             # for each sample in the batch
             for sample in range(batch_size):
@@ -206,10 +208,11 @@ with tf.Session() as sess:
 
             Gy = D.predict(G.predict(Gx))
 
-            sess.run([minG, gloss], feed_dict={z: Gx})
+            _, blG = sess.run([minG, gloss], feed_dict={z: Gx})
 
-            # print update
-            print("D: " + ", G: " + str(gloss))
+            print("D: " + str(blD) + ", G: " + str(blG))
+
+
 
 
 
