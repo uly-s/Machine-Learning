@@ -106,9 +106,6 @@ def Discriminator(img_shape, h0=512, h1=256, d=0.4, alpha=0.2):
 
     return model
 
-
-
-
 latent, img_shape, input_size, k, = 256, (28, 28), 784, 2
 
 X = Data()
@@ -154,7 +151,7 @@ optG = Adam(1e-4, 0.2)
 optD = Adam(1e-4, 0.2)
 
 # create loss functions
-gloss = - K.mean(K.log(1 - Dz))
+gloss = - K.mean(K.log(Dz))
 dloss = - K.mean(K.log(Dx) + K.log(1 - Dz))
 
 # set operations for updating
@@ -176,8 +173,6 @@ with tf.Session() as sess:
         #for batch in batches
         for batch in range(batches):
 
-            blG, blD = 0.0, 0.0
-
             # train discriminator for k batches
             for step in range(k):
 
@@ -192,9 +187,6 @@ with tf.Session() as sess:
 
                     Dx1[sample] = X[i].reshape((28, 28))
 
-                Dy0 = D.predict(G.predict(Gx))
-                Dy1 = D.predict(Dx1)
-
                 # run ression
 
                 _, blD = sess.run([minD, dloss], feed_dict={z:Gx, x:Dx1})
@@ -205,8 +197,6 @@ with tf.Session() as sess:
                 i = randint(0, num_samples)
 
                 Gx[sample] = noise[i]
-
-            Gy = D.predict(G.predict(Gx))
 
             _, blG = sess.run([minG, gloss], feed_dict={z: Gx})
 
