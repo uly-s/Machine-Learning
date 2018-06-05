@@ -5,10 +5,6 @@ from numpy import prod, add, array, zeros, ones, log
 from numpy.random import normal, randint
 import tensorflow as tf
 
-
-
-
-
 def Data():
 
     data_file = open("mnist_data.txt", 'r', encoding='utf-8')
@@ -94,7 +90,7 @@ def Discriminator(img_shape, h0=512, h1=256, d=0.4, alpha=0.2):
 
     h = Dense(h1)(h)
     h = LeakyReLU(alpha)(h)
-    h = Dropout(alpha)(h)
+    h = Dropout(d)(h)
 
     # output layer
 
