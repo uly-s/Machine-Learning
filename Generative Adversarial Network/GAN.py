@@ -6,6 +6,9 @@ from numpy.random import normal, randint
 import tensorflow as tf
 
 
+
+
+
 def Data():
 
     data_file = open("mnist_data.txt", 'r', encoding='utf-8')
@@ -65,10 +68,8 @@ def Generator(latent, img_shape, h0=256, h1=512, h2=1024 , d = 0.4, m=0.8, alpha
     h = Reshape(img_shape)(h)
 
     model = Model(z, h)
-    modelt = Model(z, h)
-    modelt.trainable = False
 
-    return model, modelt
+    return model
 
 def Discriminator(img_shape, h0=512, h1=256, d=0.4, alpha=0.2):
     """ Feed image shape = (int, int), hidden sizes = [int, int], dropout, momentum for batch normal, and alpha for
@@ -102,22 +103,20 @@ def Discriminator(img_shape, h0=512, h1=256, d=0.4, alpha=0.2):
     # model
 
     model = Model(x, h)
-    modelt = Model(x, h)
-    modelt.trainable = False
 
-    return model, modelt
+    return model
 
 
 
 
 latent, img_shape, input_size, k, = 256, (28, 28), 784, 2
 
-x = Data()
+X = Data()
 
-samples = x.shape[0]
+num_samples = X.shape[0]
 epochs = 100
 batch_size = 128
-batches = int(samples / batch_size)
+batches = int(num_samples / batch_size)
 
 Gx = zeros((batch_size, latent))
 Gy = zeros((batch_size, 1))
@@ -128,73 +127,89 @@ Dx1 = zeros((batch_size, img_shape[0], img_shape[1]))
 Dy0 = zeros((batch_size, 1))
 Dy1 = ones((batch_size, 1))
 
-noise = normal(0, 1, (samples, latent))
+# create noise
 
-G, Gt = Generator(latent, img_shape)
-D, Dt = Discriminator(img_shape)
+noise = normal(0, 1, (num_samples, latent))
 
-Adam = tf.train.AdamOptimizer
+# create gen and disc
 
-optimizer = Adam(1e-4, 0.2)
+G = Generator(latent, img_shape)
+D = Discriminator(img_shape)
+
+# set inputs
 
 z = Input(shape=(latent,))
-x = Input(shape=(input_size,))
+x = Input(shape=img_shape)
 
-sess = K.get_session()
+# set models
 
+Gz = G(z)
+Dz = D(Gz)
+Dx = D(x)
 
-# for each epoch
-for epoch in range(epochs):
+# create optimizers
 
-    #for batch in batches
-    for batch in range(batches):
+Adam = tf.train.AdamOptimizer
+optG = Adam(1e-4, 0.2)
+optD = Adam(1e-4, 0.2)
 
-        # train discriminator for k batches
-        for step in range(k):
+# create loss functions
+gloss = - K.mean(K.log(1 - Dz))
+dloss = - K.mean(K.log(Dx) + K.log(1 - Dz))
+
+# set operations for updating
+minG = optG.apply_gradients(optG.compute_gradients(gloss, G.trainable_weights))
+minD = optD.apply_gradients(optD.compute_gradients(dloss, D.trainable_weights))
+
+# init
+init_global = tf.global_variables_initializer()
+init_local = tf.local_variables_initializer()
+
+# training session
+with tf.Session() as sess:
+    sess.run(init_global)
+    sess.run(init_local)
+
+    # for each epoch
+    for epoch in range(epochs):
+
+        #for batch in batches
+        for batch in range(batches):
+
+            # train discriminator for k batches
+            for step in range(k):
+
+                # for each sample in the batch
+                for sample in range(batch_size):
+
+                    i = randint(0, num_samples)
+
+                    Gx[sample] = noise[i]
+
+                    i = randint(0, num_samples)
+
+                    Dx1[sample] = X[i].reshape((28, 28))
+
+                Dy0 = D.predict(G.predict(Gx))
+                Dy1 = D.predict(Dx1)
+
+                # run ression
+
+                sess.run([minD, dloss], feed_dict={z:Gx, x:Dx1})
 
             # for each sample in the batch
             for sample in range(batch_size):
 
-                i = randint(0, samples)
+                i = randint(0, num_samples)
 
                 Gx[sample] = noise[i]
 
-                i = randint(0, samples)
+            Gy = D.predict(G.predict(Gx))
 
-                Dx1[sample] = x[i].reshape((28, 28))
+            sess.run([minG, gloss], feed_dict={z: Gx})
 
-            Dy0 = D.predict(G.predict(Gx))
-            Dy1 = D.predict(Dx1)
-
-            dloss = 0.0
-
-            # accumulate loss for each sample
-            for sample in range(batch_size):
-
-                dloss += log(1 - Dy0[sample]) + 0.1 * log(1 - Dy1[sample])
-
-            # take average
-
-            dloss /= batch_size
-
-            # get loss weighted gradients (delta D)
-
-            deltaD = optimizer.compute_gradients(dloss, D.trainable_weights)
-
-            # get updates
-
-            upD = optimizer.apply_gradients(deltaD)
-
-            # run ression
-
-            result  = sess.run([upD, dloss])
-
-        # for each sample in the batch
-        for sample in range(batch_size):
-
-            i = randint(0, samples)
-
-            Gx[sample] = noise[i]
+            # print update
+            print("D: " + ", G: " + str(gloss))
 
 
 
