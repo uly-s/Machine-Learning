@@ -1,143 +1,125 @@
+from keras import backend as K
 from keras.models import Model, Sequential
 from keras.layers import Input, Reshape, Flatten, Dense, Lambda, LeakyReLU, Dropout, BatchNormalization, GaussianNoise
-from keras.optimizers import Adam
-from numpy import prod, add, array, zeros, ones
+from numpy import prod, add, array, zeros, ones, log
 from numpy.random import normal, randint
+import tensorflow as tf
 
 
-def Generator(latent, img_shape, hidden_sizes=[256, 512, 1024], dropout = 0.4, momentum=0.8, alpha=0.2):
-    """Returns sequential generator model, takes in latent dim, image shape = (int, int), hidden sizes = [int, int, int]
-       dropout, momentum for batch normalization, and alpha for leaky relu"""
+def Data():
 
-    G = Sequential()
+    data_file = open("mnist_data.txt", 'r', encoding='utf-8')
+
+    data = []
+
+    for line in data_file:
+        entry = array(line.split(), dtype=float)
+        data.append(entry)
+
+    x = zeros((len(data), 784))
+
+    for i, entry in enumerate(data):
+        x[i] = entry
+
+    # normalize inputs
+    x = x / 127.5 - 1
+
+    return x
+
+def Generator(latent, img_shape, h0=256, h1=512, h2=1024 , d = 0.4, m=0.8, alpha=0.2):
+    """Returns sequential generator model, takes in latent dim, image shape = (int, int), hidden sizes h0, h1, h2
+       dropout(d), momentum(m) for batch normalization, and alpha for leaky relu"""
+
+    # input
+
+    z = Input(shape=(latent,))
 
     # first hidden layer
 
-    G.add(Dense(hidden_sizes[0], input_dim=latent))
-    G.add(LeakyReLU(alpha=alpha))
-    G.add(BatchNormalization(momentum=momentum))
-    G.add(Dropout(dropout))
+    h = z
+    h = Dense(h0)(h)
+    h = BatchNormalization(momentum=m)(h)
+    h = LeakyReLU(alpha)(h)
+    h = Dropout(d)(h)
 
     # second
 
-    G.add(Dense(hidden_sizes[1]))
-    G.add(LeakyReLU(alpha=alpha))
-    G.add(BatchNormalization(momentum=momentum))
-    G.add(Dropout(dropout))
+    h = Dense(h1)(h)
+    h = BatchNormalization(momentum=m)(h)
+    h = LeakyReLU(alpha)(h)
+    h = Dropout(d)(h)
 
     # third
 
-    G.add(Dense(hidden_sizes[2]))
-    G.add(LeakyReLU(alpha=alpha))
-    G.add(BatchNormalization(momentum=momentum))
-    G.add(Dropout(dropout))
+    h = Dense(h2)(h)
+    h = BatchNormalization(momentum=m)(h)
+    h = LeakyReLU(alpha)(h)
+    h = Dropout(d)(h)
 
     # final hidden layer, dependent on image shape
 
-    G.add(Dense(prod(img_shape), activation='tanh'))
-
-    # get testing layer
-    y = Dense(1, activation='sigmoid')(G)
+    h = Dense(prod(img_shape), activation='tanh')(h)
 
     # reshape
 
-    G.add(Reshape(img_shape))
+    h = Reshape(img_shape)(h)
 
-    # summary
+    model = Model(z, h)
+    modelt = Model(z, h)
+    modelt.trainable = False
 
-    G.summary()
+    return model, modelt
 
-    return G, y
-
-def Discriminator(input_size, img_shape, hidden_sizes=[512, 256], dropout=0.4, momentum=0.8, alpha=0.2):
+def Discriminator(img_shape, h0=512, h1=256, d=0.4, alpha=0.2):
     """ Feed image shape = (int, int), hidden sizes = [int, int], dropout, momentum for batch normal, and alpha for
         leaky relu """
 
-    D = Sequential()
+    # input layer
+
+    x = Input(shape=img_shape)
+
+    h = x
 
     # flatten input
-
-    D.add(Flatten(input_shape=img_shape))
+    h = Flatten(input_shape=img_shape)(h)
 
     # first hidden layer
 
-    D.add(Dense(hidden_sizes[0]))
-    D.add(LeakyReLU(alpha=alpha))
-    D.add(Dropout(dropout))
+    h = Dense(h0)(h)
+    h = LeakyReLU(alpha)(h)
+    h = Dropout(d)(h)
 
     # second
 
-    D.add(Dense(hidden_sizes[1]))
-    D.add(LeakyReLU(alpha=alpha))
-    D.add(Dropout(dropout))
+    h = Dense(h1)(h)
+    h = LeakyReLU(alpha)(h)
+    h = Dropout(alpha)(h)
 
     # output layer
 
-    D.add(Dense(1, activation='sigmoid'))
+    h = Dense(1, activation='sigmoid')(h)
 
-    # set trainable to false
+    # model
 
-    D.trainable = False
+    model = Model(x, h)
+    modelt = Model(x, h)
+    modelt.trainable = False
 
-    # summary
-
-    D.summary()
-
-    # compile
-
-    return D
-
-data_file = open("mnist_data.txt", 'r', encoding='utf-8')
-
-data = []
-
-for line in data_file:
-    entry = array(line.split(), dtype=float)
-    data.append(entry)
-
-x, samples = zeros((len(data), 784)), len(data)
-
-for i, entry in enumerate(data):
-    x[i] = entry
-
-
-
-x = x / 127.5 - 1
-
-
-latent, img_shape, input_size, k, k_init = 256, (28, 28), 784, 10, 100
-
-
-G, y = Generator(latent, img_shape)
-D = Discriminator(input_size, img_shape)
-
-D.compile(optimizer=Adam(0.0002, 0.5), loss='binary_crossentropy', metrics=['accuracy'])
-
-z = Input(shape=(latent,))
-
-Gz = G(z)
-GD = D(Gz)
+    return model, modelt
 
 
 
 
-GAN = Model(z, GD)
-GEN = Model(z, y)
+latent, img_shape, input_size, k, = 256, (28, 28), 784, 2
 
-GAN.summary()
-GEN.summary()
+x = Data()
 
-
-GAN.compile(optimizer=Adam(0.0002, 0.5), loss='binary_crossentropy')
-GEN.compile(optimizer=Adam(0.0002, 0.5), loss='binary_crossentropy')
-
-
+samples = x.shape[0]
 epochs = 100
 batch_size = 128
 batches = int(samples / batch_size)
 
-Gx0 = zeros((batch_size, latent))
-Gx1 = zeros((batch_size, latent))
+Gx = zeros((batch_size, latent))
 Gy = zeros((batch_size, 1))
 
 Dx0 = zeros((batch_size, img_shape[0], img_shape[1]))
@@ -148,12 +130,21 @@ Dy1 = ones((batch_size, 1))
 
 noise = normal(0, 1, (samples, latent))
 
+G, Gt = Generator(latent, img_shape)
+D, Dt = Discriminator(img_shape)
+
+Adam = tf.train.AdamOptimizer
+
+optimizer = Adam(1e-4, 0.2)
+
+z = Input(shape=(latent,))
+x = Input(shape=(input_size,))
+
+sess = K.get_session()
+
+
 # for each epoch
 for epoch in range(epochs):
-
-    print("Epoch: " + str(epoch) + '\n')
-
-    real_loss, fake_loss, real_acc, fake_acc, D_loss, G_loss = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
     #for batch in batches
     for batch in range(batches):
@@ -166,35 +157,48 @@ for epoch in range(epochs):
 
                 i = randint(0, samples)
 
-                Gx0[sample] = noise[i]
+                Gx[sample] = noise[i]
 
                 i = randint(0, samples)
 
                 Dx1[sample] = x[i].reshape((28, 28))
 
-            Dx0 = G.predict(Gx0)
+            Dy0 = D.predict(G.predict(Gx))
+            Dy1 = D.predict(Dx1)
 
-            Dx0_loss = D.train_on_batch(Dx0, Dy0)
-            Dx1_loss = D.train_on_batch(Dx1, Dy1)
+            dloss = 0.0
 
-            D_loss = 0.5 * add(Dx0_loss[0], Dx1_loss[0])
+            # accumulate loss for each sample
+            for sample in range(batch_size):
 
-            print("D loss: " + str(D_loss) + ", fake loss: " + str(Dx0_loss[0]) + ", fake acc: " + str(Dx0_loss[1]) + ", real loss: " + str(Dx1_loss[0]) + ", real acc: " + str(Dx1_loss[1]))
+                dloss += log(1 - Dy0[sample]) + 0.1 * log(1 - Dy1[sample])
+
+            # take average
+
+            dloss /= batch_size
+
+            # get loss weighted gradients (delta D)
+
+            deltaD = optimizer.compute_gradients(dloss, D.trainable_weights)
+
+            # get updates
+
+            upD = optimizer.apply_gradients(deltaD)
+
+            # run ression
+
+            result  = sess.run([upD, dloss])
 
         # for each sample in the batch
         for sample in range(batch_size):
 
             i = randint(0, samples)
 
-            Gx1[sample] = noise[i]
+            Gx[sample] = noise[i]
 
 
-        pred = G.predict(Gx1)
-        Gy = D.predict(pred)
 
-        G_loss = GEN.train_on_batch(Gx1, Gy)
 
-        #print("batch: " + str(batch) + ", gen loss: " + str(G_loss))
 
 
 
