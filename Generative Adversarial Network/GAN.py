@@ -25,7 +25,7 @@ def Data():
 
     return x
 
-def Generator(latent, img_shape, h0=256, h1=512, h2=1024 , d = 0.4, m=0.8, alpha=0.2):
+def Generator(latent, img_shape, h0=256, h1=512, h2=1024, d=0.4, m=0.8, alpha=0.2):
     """Returns sequential generator model, takes in latent dim, image shape = (int, int), hidden sizes h0, h1, h2
        dropout(d), momentum(m) for batch normalization, and alpha for leaky relu"""
 
@@ -102,27 +102,23 @@ def Discriminator(img_shape, h0=512, h1=256, d=0.4, alpha=0.2):
 
     return model
 
-latent, img_shape, input_size, k, = 256, (28, 28), 784, 2
+latent, img_shape, input_size, k, = 256, (28, 28), 784, 1
 
-X = Data()
+X = Data()  # get mnist text file
 
 num_samples = X.shape[0]
 epochs = 100
 batch_size = 128
 batches = int(num_samples / batch_size)
 
-Gx = zeros((batch_size, latent))
-Gy = zeros((batch_size, 1))
+noise = zeros((batch_size, latent))  # noise to feed into generator
+generated = zeros((batch_size, 1))   # generated images
 
-Dx0 = zeros((batch_size, img_shape[0], img_shape[1]))
-Dx1 = zeros((batch_size, img_shape[0], img_shape[1]))
-
-Dy0 = zeros((batch_size, 1))
-Dy1 = ones((batch_size, 1))
+real = zeros((batch_size, img_shape[0], img_shape[1]))  # real images for discriminator
 
 # create noise
 
-noise = normal(0, 1, (num_samples, latent))
+noise_prior = normal(0, 1, (num_samples, latent))
 
 # create gen and disc
 
@@ -131,26 +127,27 @@ D = Discriminator(img_shape)
 
 # set inputs
 
-z = Input(shape=(latent,))
-x = Input(shape=img_shape)
+z = Input(shape=(latent,))      # noise input
+x = Input(shape=img_shape)      # image input
 
 # set models
 
-Gz = G(z)
-Dz = D(Gz)
-Dx = D(x)
+Gz = G(z)       # noise into generator
+Dz = D(Gz)      # noise into gen into disc
+Dx = D(x)       # real into disc
 
 # create optimizers
 
-Adam = tf.train.AdamOptimizer
-optG = Adam(1e-4, 0.2)
+Adam = tf.train.AdamOptimizer       # need two optimizers because the internal variables
+optG = Adam(1e-4, 0.2)              # of adam will be different for each model
 optD = Adam(1e-4, 0.2)
 
 # create loss functions
-gloss = - K.mean(K.log(Dz))
+
+gloss = - K.mean(K.log(Dz))     # research paper hs (1 - Dz) but loss goes to 0 (suggested on github)
 dloss = - K.mean(K.log(Dx) + K.log(1 - Dz))
 
-# set operations for updating
+# set operations for updating, compute gradients between loss and weights, get updates
 minG = optG.apply_gradients(optG.compute_gradients(gloss, G.trainable_weights))
 minD = optD.apply_gradients(optD.compute_gradients(dloss, D.trainable_weights))
 
@@ -175,28 +172,28 @@ with tf.Session() as sess:
                 # for each sample in the batch
                 for sample in range(batch_size):
 
-                    i = randint(0, num_samples)
+                    i = randint(0, num_samples)     # get a random sample from prior noise ( interpreted from paper)
 
-                    Gx[sample] = noise[i]
+                    noise[sample] = noise_prior[i]
 
-                    i = randint(0, num_samples)
+                    i = randint(0, num_samples)     # get a random image
 
-                    Dx1[sample] = X[i].reshape((28, 28))
+                    real[sample] = X[i].reshape((28, 28))
 
                 # run ression
 
-                _, blD = sess.run([minD, dloss], feed_dict={z:Gx, x:Dx1})
+                _, batch_loss_D = sess.run([minD, dloss], feed_dict={z:noise, x:real})  # train on real and fake
 
             # for each sample in the batch
             for sample in range(batch_size):
 
-                i = randint(0, num_samples)
+                i = randint(0, num_samples)     # sample noise prior
 
-                Gx[sample] = noise[i]
+                noise[sample] = noise_prior[i]
 
-            _, blG = sess.run([minG, gloss], feed_dict={z: Gx})
+            _, batch_loss_G = sess.run([minG, gloss], feed_dict={z:noise})      # run minimize on noise batch
 
-            print("D: " + str(blD) + ", G: " + str(blG))
+            print("D: " + str(batch_loss_D) + ", G: " + str(batch_loss_G))
 
 
 
