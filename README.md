@@ -21,11 +21,7 @@
 # RNN
   
   Recurrent neural net in numpy.
-  
-# Random Encounter
-
-  playing around with text generation
-  
+    
 # Text Tokenize
 
   Functions for rather quickly tokenizing and processing text for use in NLP. Word2toke and sen2toke is quite functional.
@@ -34,15 +30,13 @@
 
   Recreating a keras implementation of a variational auto encoder, however the code from the guide does not work on my computer so I am troubleshooting. 
 
+# Workspace
+
+  General testing area
   
 
 
-
-
-# Data
-
-So far I have been working from MNIST csv files, which can be found by googling "mnist csv"
-
-
 # Disclaimer
+
+  These are about half original, I piece together implementations from different sources rewriting and refactoring line by line. No copy and pasting here. 
 
