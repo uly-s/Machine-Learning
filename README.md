@@ -28,7 +28,7 @@
   
 # Variational Auto Encoder
 
-  Recreating a keras implementation of a variational auto encoder, however the code from the guide does not work on my computer so I am troubleshooting. 
+  Combination keras and tf implementation of VAE from many sources. 
 
 # Workspace
 
