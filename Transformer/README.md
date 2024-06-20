@@ -21,3 +21,7 @@ I can clearly enough picture this in my head, but I can't clearly visualize from
 Looking at it again the math is... really not that crazy and worth sitting down to learn itself. I could use a calm refresher. 
 
 If I can do 'deeper' and understand intuitively how the derivatives work in the minute case and 'wide' in understanding (and picturing) the data / numeric flow from start to finish, I will feel perfectly employable as a machine learning engineer.
+
+(Also finally learning pytorch would help... ya know a lot.)
+
+Also update this repo from master -> main
