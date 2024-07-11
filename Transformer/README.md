@@ -25,3 +25,9 @@ If I can do 'deeper' and understand intuitively how the derivatives work in the 
 (Also finally learning pytorch would help... ya know a lot.)
 
 Also update this repo from master -> main
+
+------ 
+
+Update these notes for that full OpenAI chat, then start on backprop.
+
+After updating your model with the full encoder / decoder architecture.
