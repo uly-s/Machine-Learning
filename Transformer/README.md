@@ -31,3 +31,47 @@ Also update this repo from master -> main
 Update these notes for that full OpenAI chat, then start on backprop.
 
 After updating your model with the full encoder / decoder architecture.
+
+------
+
+## Encoder / Decoder
+The transformer architecture is split into encoder / decoder modules or layers - I like modules because each one is composed of layers composed of more layers.
+
+The standard architecture is such
+
+### Encoder
+An encoder consists of N (typically N=6) identical layers each consisting of a multi-headed attention sub-layer and a feed-forward sub layer. The multi headed attention layer is as described above and in ```attention.py```. The ff layer is basically just a vanilla feed foward 2 layer deep neural net with  ReLu activation function. 
+
+The multi-head attention layer computes the output matrix as described elsewhere and the ff layer takes each vector of the inputted matrix as input (position wise input) to compute the input for the next layer or decoder.
+
+When asked about the feed-forward nets and why they're necessary, chatgpt said "The FFN introduces non-linear transformations, enabling the model to capture complex patterns." I'm not sure exactly what that means but should later.
+
+Additionally layer normalization and residual connections are applied at each sub layer- layer normalization is quite straight forward and more or less just 'squishing' signal / input such that the signal is more 'leveled out'. 
+
+Residual connections are somewhat counter-intuitively named because they are described as 'skipping layers' making you think of a neural-architecture, when in actually the math more closely resembles 'signal accumulation' rather than residual connections.
+
+Both techniques help to alleviate the vanishing gradients problem of neural networks.
+
+### Decoder
+The decoder is almost identical to the encoder - made up of N (typically N = 6) identical layers each composed of 2 sub layers - except instead of being the regular multi-headed attention layer of the encoder it uses masked multi headed attention.
+
+Masked multi headed attention is basically just taking an upper triangle segment of the input matrix - masking some of the input such that the decoder can't look into the future and take in input tokens it shouldn't know about. Sans masking its just regular multi headed attention.
+
+Like the encoder for each attention sub layer there is a corresponding ff sub layer applying ReLu in between its two sub-sub-sub layers. Providing the same services and functionality as in the encoder. Followed by normalization and residuals after each sub layer just as in the encoder.
+
+## Output
+After the decoder layers the signal undergoes a few more transformations.
+
+"The final steps involve converting the decoder's output into a probability distribution over the target vocabulary, from which the final tokens are generated." 
+
+First the final output of the decoder layers is passed into a linear (fully connected) layer that 'projects the decoders output to the size of the target vocabulary.' 
+
+The output from which is passed through a softmax function to convert it into a probability distribution over the target vocabulary for each token in the sequence. This probability distribution indicates the likelihood of each token in the vocabulary being the next token in the output sequence.
+
+I'm not sure of the exact nature of this last part - except that it feels like the output sequence is "filtered through" the proceeding probability distribution where each token is a like a ball in a pachinko machine.
+
+Finally Argmax (inferencing) - the token with the highest probability is selected as the next token.
+
+
+
+
